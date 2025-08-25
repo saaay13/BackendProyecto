@@ -88,9 +88,6 @@ namespace BackendProyecto.Controllers
             await dBConexion.SaveChangesAsync();
 
             return Ok($"Certificado con Id {id} eliminado correctamente");
-
-
-
         }
     }
 }

@@ -51,13 +51,15 @@ namespace BackendProyecto.Controllers
 
             return Ok(inscripcion);
         }
-
-        // POST: api/Inscripciones
         [HttpPost]
         public async Task<ActionResult<Inscripciones>> PostInscripcion(Inscripciones inscripcion)
         {
             if (!ModelState.IsValid)
                 return BadRequest("Datos invalidos");
+            if (inscripcion.IdActividad == inscripcion.IdUsuario)
+            {
+                return BadRequest("El Usuario ya se registro en esa actividad");
+            }
 
             var usuario = await dBConexion.Usuario.FindAsync(inscripcion.IdUsuario);
             if (usuario == null)
@@ -67,7 +69,6 @@ namespace BackendProyecto.Controllers
             if (actividad == null)
                 return BadRequest("La actividad no existe");
 
-            // 
             var inscritos = await dBConexion.Inscripcion
                 .CountAsync(i => i.IdActividad == inscripcion.IdActividad
                                 && i.EstadoInscripcion == Inscripciones.EstadoInscripcionEnum.Confirmada);
@@ -75,14 +76,19 @@ namespace BackendProyecto.Controllers
             if (inscritos >= actividad.CupoMaximo)
                 return BadRequest("No hay cupos disponibles para esta actividad");
 
-            // 
             inscripcion.EstadoInscripcion = Inscripciones.EstadoInscripcionEnum.Confirmada;
 
             dBConexion.Inscripcion.Add(inscripcion);
+
+            
+            actividad.CupoMaximo--; //Reduccion
+            dBConexion.Actividad.Update(actividad);//Actualizacion
+
             await dBConexion.SaveChangesAsync();
 
             return CreatedAtAction("GetInscripcion", new { id = inscripcion.IdInscripcion }, inscripcion);
         }
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteIncripcion(int id)
         {

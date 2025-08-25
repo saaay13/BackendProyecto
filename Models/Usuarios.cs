@@ -29,7 +29,7 @@ namespace BackendProyecto.Models
 
         [Phone(ErrorMessage="El telefono no es valido")]
         [StringLength(20, ErrorMessage = "El telefono no puede superar los 20 caracteres")]
-        [RegularExpression(@"^\+?[0-9]{1,4}\s?[0-9]{6,12}$", 
+        [RegularExpression(@"^\+?[0-9]{1,4}\s?[0-9]{6,12}$",
         ErrorMessage = "El telefono debe tener formato +código espacio numero, solo digitos")]
         public string Telefono { get; set; } = string.Empty;//+591 77875506
         [Required]
