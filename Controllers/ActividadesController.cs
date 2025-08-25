@@ -73,9 +73,6 @@ namespace BackendProyecto.Controllers
             await dBConexion.SaveChangesAsync();
 
             return Ok($"Actividad con Id {id} eliminado correctamente");
-
-
-
         }
     }
 }
