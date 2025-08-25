@@ -62,6 +62,24 @@ namespace BackendProyecto.Controllers
 
             return CreatedAtAction("GetAsistencia", new { id = asistencia.IdAsistencia }, asistencia);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAsistencia(int id)
+        {
+
+            var asistencia = await dBConexion.Asistencia.FindAsync(id);
+            if (asistencia== null)
+            {
+                return NotFound("Asistencia no encontrada");
+            }
+
+            dBConexion.Asistencia.Remove(asistencia);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"Asistencia con Id {id} eliminada correctamente");
+
+
+
+        }
 
     }
 }

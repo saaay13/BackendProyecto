@@ -83,6 +83,23 @@ namespace BackendProyecto.Controllers
 
             return CreatedAtAction("GetInscripcion", new { id = inscripcion.IdInscripcion }, inscripcion);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteIncripcion(int id)
+        {
+
+            var incripcion = await dBConexion.Inscripcion.FindAsync(id);
+            if (incripcion == null)
+            {
+                return NotFound("Inscripcion no encontrada");
+            }
+
+            dBConexion.Inscripcion.Remove(incripcion);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"Inscripcion con Id {id} eliminado correctamente");
+
+
+        }
 
     }
 }

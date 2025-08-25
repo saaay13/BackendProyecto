@@ -51,6 +51,24 @@ namespace BackendProyecto.Controllers
 
             return CreatedAtAction("GetCarnets", new { idCarnet = carnet.IdCarnet }, carnet);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCarnet(int id)
+        {
+
+            var carnet = await dBConexion.Carnet.FindAsync(id);
+            if (carnet== null)
+            {
+                return NotFound("Carnet no encontrado");
+            }
+
+            dBConexion.Carnet.Remove(carnet);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"Carnet con Id {id} eliminado correctamente");
+
+
+
+        }
 
     }
 }

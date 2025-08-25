@@ -74,5 +74,23 @@ namespace BackendProyecto.Controllers
 
             return CreatedAtAction("GetCertificado", new { id = certificado.IdCertificado }, certificado);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCertificado(int id)
+        {
+
+            var certiicado = await dBConexion.Certificado.FindAsync(id);
+            if (certiicado == null)
+            {
+                return NotFound("Certificado no encontrado");
+            }
+
+            dBConexion.Certificado.Remove(certiicado);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"Certificado con Id {id} eliminado correctamente");
+
+
+
+        }
     }
 }
