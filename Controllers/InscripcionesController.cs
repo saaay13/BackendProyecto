@@ -67,7 +67,7 @@ namespace BackendProyecto.Controllers
             if (actividad == null)
                 return BadRequest("La actividad no existe");
 
-            // Contar inscripciones confirmadas para validar cupo
+            // 
             var inscritos = await dBConexion.Inscripcion
                 .CountAsync(i => i.IdActividad == inscripcion.IdActividad
                                 && i.EstadoInscripcion == Inscripciones.EstadoInscripcionEnum.Confirmada);
@@ -75,7 +75,7 @@ namespace BackendProyecto.Controllers
             if (inscritos >= actividad.CupoMaximo)
                 return BadRequest("No hay cupos disponibles para esta actividad");
 
-            // Asignar estado inicial del enum
+            // 
             inscripcion.EstadoInscripcion = Inscripciones.EstadoInscripcionEnum.Confirmada;
 
             dBConexion.Inscripcion.Add(inscripcion);

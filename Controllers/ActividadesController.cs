@@ -38,6 +38,11 @@ namespace BackendProyecto.Controllers
         [HttpPost]
         public async Task<ActionResult<Actividades>> PostActividad(Actividades actividad)
         {
+            var buscadoNombre = dBConexion.Actividad.Any(p => p.NombreActividad == actividad.NombreActividad);
+            if (buscadoNombre)
+            {
+                return BadRequest("La Actividad ya existe");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest("Datos invalidos");
@@ -54,6 +59,23 @@ namespace BackendProyecto.Controllers
 
             return CreatedAtAction("GetActividad", new { id = actividad.IdActividad }, actividad);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteActividad(int id)
+        {
 
+            var actividad = await dBConexion.Actividad.FindAsync(id);
+            if (actividad == null)
+            {
+                return NotFound("Actividad no encontrado");
+            }
+
+            dBConexion.Actividad.Remove(actividad);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"Actividad con Id {id} eliminado correctamente");
+
+
+
+        }
     }
 }

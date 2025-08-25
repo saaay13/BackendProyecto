@@ -24,6 +24,11 @@ namespace BackendProyecto.Controllers
         [HttpPost]
         public async Task<ActionResult<Roles>> PostRol(Roles rol)
         {
+            var buscadoNombre = dBConexion.Rol.Any(p => p.NombreRol== rol.NombreRol);
+            if (buscadoNombre)
+            {
+                return BadRequest("El Rol ya existe");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest("Datos del rol inválidos");
@@ -34,6 +39,23 @@ namespace BackendProyecto.Controllers
 
             return CreatedAtAction("GetRoles", new { id = rol.IdRol }, rol);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteRol(int id)
+        {
+
+            var rol = await dBConexion.Rol.FindAsync(id);
+            if (rol== null)
+            {
+                return NotFound("Rol no encontrado");
+            }
+
+            dBConexion.Rol.Remove(rol);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"Rol con Id {id} eliminado correctamente");
+
+        }
+
 
     }
 }

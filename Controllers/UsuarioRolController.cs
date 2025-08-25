@@ -29,6 +29,7 @@ namespace BackendProyecto.Controllers
         [HttpPost]
         public async Task<ActionResult<UsuarioRol>> PostUsuarioRol(UsuarioRol usuarioRol)
         {
+
             if (!ModelState.IsValid)
                 return BadRequest("Datos invalidos");
 

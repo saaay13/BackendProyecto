@@ -37,6 +37,11 @@ namespace BackendProyecto.Controllers
         [HttpPost]
         public async Task<ActionResult<Usuarios>> PostUsuario(Usuarios usuario)
         {
+            var buscadoNombre = dBConexion.Usuario.Any(p => p.Nombre == usuario.Nombre);
+            if (buscadoNombre)
+            {
+                return BadRequest("El usuario ya existe");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest("Datos del usuario invalidos");
@@ -47,6 +52,24 @@ namespace BackendProyecto.Controllers
 
             return CreatedAtAction("GetUsuario", new { id = usuario.IdUsuario }, usuario);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUsuario(int id)
+        { 
+
+            var usuario = await dBConexion.Usuario.FindAsync(id);
+            if (usuario == null)
+            {
+                return NotFound("Usuario no encontrado");
+            }
+
+            dBConexion.Usuario.Remove(usuario);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"Usuario con Id {id} eliminado correctamente");
+
+        }
+
+
 
 
 

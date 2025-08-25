@@ -37,19 +37,24 @@ namespace BackendProyecto.Controllers
         [HttpPost]
         public async Task<ActionResult<Proyectos>> PostProyecto(Proyectos proyecto)
         {
+            var buscadoNombre = dBConexion.Proyecto.Any(p => p.NombreProyecto == proyecto.NombreProyecto);
+            if (buscadoNombre)
+            {
+                return BadRequest("El proyecto ya existe");
+            }
             if (!ModelState.IsValid)
             {
                 return BadRequest("Datos invalidos");
             }
 
-            var ong=await dBConexion.Ong.FindAsync(proyecto.IdOng);
+            var ong = await dBConexion.Ong.FindAsync(proyecto.IdOng);
             if (ong == null)
             {
                 return BadRequest("La ong no existe");
             }
 
             var responsable = await dBConexion.Usuario.FindAsync(proyecto.IdResponsable);
-            if (responsable==null)
+            if (responsable == null)
             {
                 return BadRequest("El responsable no existe");
             }
@@ -59,6 +64,22 @@ namespace BackendProyecto.Controllers
 
             return CreatedAtAction(nameof(GetProyectos), new { id = proyecto.IdProyecto }, proyecto);
         }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProyecto(int id)
+        {
 
+            var proyecto = await dBConexion.Proyecto.FindAsync(id);
+            if (proyecto == null)
+            {
+                return NotFound("Proyecto no encontrado");
+            }
+
+            dBConexion.Proyecto.Remove(proyecto);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"Proyecto con Id {id} eliminado correctamente");
+
+
+        }
     }
 }

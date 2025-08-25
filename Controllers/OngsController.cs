@@ -33,6 +33,12 @@ namespace BackendProyecto.Controllers
         [HttpPost]
         public async Task<ActionResult<Ongs>> PostOng(Ongs ong)
         {
+            var buscadoNombre = dBConexion.Ong.Any(p => p.NombreOng == ong.NombreOng);
+            if (buscadoNombre)
+            {
+                return BadRequest("La ONG ya existe");
+            }
+
             if (!ModelState.IsValid)
             {
                 return BadRequest("Datos invalidos");
@@ -42,6 +48,22 @@ namespace BackendProyecto.Controllers
             await dBConexion.SaveChangesAsync();
 
             return CreatedAtAction("GetOng", new { idOng = ong.IdOng }, ong);
+        }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteOng(int id)
+        {
+
+            var ong = await dBConexion.Ong.FindAsync(id);
+            if (ong == null)
+            {
+                return NotFound("Usuario no encontrado");
+            }
+
+            dBConexion.Ong.Remove(ong);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"Ong con Id {id} eliminado correctamente");
+
         }
 
     }

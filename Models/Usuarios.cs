@@ -11,7 +11,7 @@ namespace BackendProyecto.Models
 
         [Required(ErrorMessage="El nombre del usuario es obligatorio")]
         [MinLength(3,ErrorMessage ="El nombre debe tener como minimo 3 caracteres")]
-        public string Nombre{ get; set; } = string.Empty;
+        public string Nombre { get; set; } = string.Empty;
         //
 
         [Required(ErrorMessage="El apellido del usuario es obligatorio")]
