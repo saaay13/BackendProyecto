@@ -33,7 +33,10 @@ namespace BackendProyecto.Controllers
             {
                 return BadRequest("Datos invalidos");
             }
-
+            if (carnet.IdOng == carnet.IdUsuario)
+            { 
+                return BadRequest("La ONG ya genero el carnet con ese Usuario");
+            }
             var usuario = await dBConexion.Usuario.FindAsync(carnet.IdUsuario);
             if (usuario == null)
             {

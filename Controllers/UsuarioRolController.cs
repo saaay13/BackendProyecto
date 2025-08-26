@@ -32,6 +32,10 @@ namespace BackendProyecto.Controllers
 
             if (!ModelState.IsValid)
                 return BadRequest("Datos invalidos");
+            if (usuarioRol.IdRol == usuarioRol.IdUsuario)
+            {
+                return BadRequest("A ese usuario ya se le asigno ese rol");
+            }    
 
             var usuario = await dBConexion.Usuario.FindAsync(usuarioRol.IdUsuario);
             if (usuario == null)

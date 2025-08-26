@@ -56,6 +56,10 @@ namespace BackendProyecto.Controllers
             {
                 return BadRequest("Datos invalidos");
             }
+            if (certificado.IdActividad == certificado.IdUsuario)
+            { 
+                return BadRequest("El certificado de ese usuario en esa actividad ya se genero ");
+            }
 
             var usuario = await dBConexion.Usuario.FindAsync(certificado.IdUsuario);
             if (usuario == null)

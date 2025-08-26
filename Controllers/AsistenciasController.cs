@@ -51,6 +51,7 @@ namespace BackendProyecto.Controllers
                 return BadRequest("Datos invalidos");
             }
 
+
             var inscripcion = await dBConexion.Inscripcion.FindAsync(asistencia.IdInscripcion);
             if (inscripcion == null)
             {
