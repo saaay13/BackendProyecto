@@ -17,6 +17,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
+        //[Authorize(Roles ="Administrador")]
         public async Task<ActionResult<IEnumerable<UsuarioRol>>> GetUsuarioRoles()
         {
             var usuarioRoles = await dBConexion.UsuarioRol
@@ -27,6 +28,7 @@ namespace BackendProyecto.Controllers
             return usuarioRoles;
         }
         [HttpPost]
+        //[Authorize(Roles ="Administrador")]
         public async Task<ActionResult<UsuarioRol>> PostUsuarioRol(UsuarioRol usuarioRol)
         {
 

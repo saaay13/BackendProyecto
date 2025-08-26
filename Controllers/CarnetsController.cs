@@ -17,6 +17,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
+        
         public async Task<ActionResult<IEnumerable<Carnets>>> GetCarnets()
         {
             var carnets = await dBConexion.Carnet
@@ -27,6 +28,7 @@ namespace BackendProyecto.Controllers
             return carnets;
         }
         [HttpPost]
+        //[Authorize(Roles ="Administrador")]
         public async Task<ActionResult<Carnets>> PostCarnet(Carnets carnet)
         {
             if (!ModelState.IsValid)
@@ -55,6 +57,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetCarnets", new { idCarnet = carnet.IdCarnet }, carnet);
         }
         [HttpDelete("{id}")]
+        //[Authorize(Roles ="Administrador")]
         public async Task<IActionResult> DeleteCarnet(int id)
         {
 

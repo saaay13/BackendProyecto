@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using BackendProyecto.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BackendProyecto.Controllers
 {
@@ -31,6 +32,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpPost]
+        //[Authorize(Roles ="Administrador")]
         public async Task<ActionResult<Ongs>> PostOng(Ongs ong)
         {
             var buscadoNombre = dBConexion.Ong.Any(p => p.NombreOng == ong.NombreOng);
@@ -50,6 +52,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetOng", new { idOng = ong.IdOng }, ong);
         }
         [HttpDelete("{id}")]
+        //[Authorize(Roles ="Administrador")]
         public async Task<IActionResult> DeleteOng(int id)
         {
 

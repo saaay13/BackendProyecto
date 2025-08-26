@@ -50,6 +50,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpPost]
+        //[Authorize(Roles ="Administrador")]
         public async Task<ActionResult<Certificados>> PostCertificado(Certificados certificado)
         {
             if (!ModelState.IsValid)
@@ -79,6 +80,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetCertificado", new { id = certificado.IdCertificado }, certificado);
         }
         [HttpDelete("{id}")]
+        //[Authorize(Roles ="Administrador")]
         public async Task<IActionResult> DeleteCertificado(int id)
         {
 
