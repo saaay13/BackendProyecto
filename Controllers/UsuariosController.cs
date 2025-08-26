@@ -18,6 +18,7 @@ namespace BackendProyecto.Controllers
 
         // Get de todos los usuarios
         [HttpGet]
+        //[Authorize(Roles ="Administrador")]
         public async Task<ActionResult<IEnumerable<Usuarios>>> GetUsuarios()
         {
             return await dBConexion.Usuario.ToListAsync();
@@ -53,6 +54,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetUsuario", new { id = usuario.IdUsuario }, usuario);
         }
         [HttpDelete("{id}")]
+        //[Authorize(Roles ="Administrador , Coordinador")]
         public async Task<IActionResult> DeleteUsuario(int id)
         { 
 
