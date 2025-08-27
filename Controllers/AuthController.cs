@@ -11,9 +11,11 @@ using System.Text;
 
 namespace BackendProyecto.Controllers
 {
+
     [Route("api/[controller]")]
     [ApiController]
-    [AllowAnonymous]
+    //[AllowAnonymous]
+
     public class AuthController : ControllerBase
     {
         private readonly DBConexion dBConexion;
@@ -47,9 +49,18 @@ namespace BackendProyecto.Controllers
             };
 
             dBConexion.Usuario.Add(usuario);
+            await dBConexion.SaveChangesAsync(); 
+
+            dBConexion.UsuarioRol.Add(new UsuarioRol
+            {
+                IdUsuario = usuario.IdUsuario,
+                IdRol = 3, // Voluntario
+                FechaAsignacion = DateTime.Now
+            });
             await dBConexion.SaveChangesAsync();
 
             return Ok(new { mensaje = "Usuario registrado exitosamente", usuario.CorreoUsuario });
+
         }
 
         // ------------------- LOGIN -------------------
@@ -135,12 +146,14 @@ namespace BackendProyecto.Controllers
 
         // ------------------- CRUD -------------------
         [HttpGet]
+        [Authorize(Roles ="Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<Usuarios>>> GetUsuarios()
         {
             return await dBConexion.Usuario.ToListAsync();
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Usuarios>> GetUsuario(int id)
         {
             var usuario = await dBConexion.Usuario.FindAsync(id);
@@ -151,6 +164,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteUsuario(int id)
         {
             var usuario = await dBConexion.Usuario.FindAsync(id);

@@ -1,12 +1,14 @@
 ﻿using BackendProyecto.Data;
+using BackendProyecto.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BackendProyecto.Models;
 
 namespace BackendProyecto.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    
     public class RolController : ControllerBase
     {
         private readonly DBConexion dBConexion;
@@ -17,11 +19,13 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<Roles>>> GetRoles()
         {
             return await dBConexion.Rol.ToListAsync();
         }
         [HttpPost]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Roles>> PostRol(Roles rol)
         {
             var buscadoNombre = dBConexion.Rol.Any(p => p.NombreRol== rol.NombreRol);
@@ -40,6 +44,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetRoles", new { id = rol.IdRol }, rol);
         }
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteRol(int id)
         {
 

@@ -1,7 +1,8 @@
 ﻿using BackendProyecto.Data;
+using BackendProyecto.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BackendProyecto.Models;
 
 namespace BackendProyecto.Controllers
 {
@@ -17,6 +18,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrador , Coordinador")]
         public async Task<ActionResult<IEnumerable<Actividades>>> GetActividades()
         {
             return await dBConexion.Actividad

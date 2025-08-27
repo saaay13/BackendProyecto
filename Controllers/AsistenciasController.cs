@@ -1,7 +1,8 @@
 ﻿using BackendProyecto.Data;
+using  BackendProyecto.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using  BackendProyecto.Models;
 
 
 namespace BackendProyecto.Controllers
@@ -16,7 +17,7 @@ namespace BackendProyecto.Controllers
         {
             this.dBConexion = dBConexion;
         }
-        //Get de Asistencias
+        
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Asistencias>>> GetAsitencias()
         {
@@ -44,6 +45,8 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Administrador , Coordinador")]
+
         public async Task<ActionResult<Asistencias>> PostAsistencia(Asistencias asistencia)
         {
             if (!ModelState.IsValid)

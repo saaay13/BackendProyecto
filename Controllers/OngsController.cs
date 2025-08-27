@@ -18,6 +18,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrador , Coordinador")]
         public async Task<ActionResult<IEnumerable<Ongs>>> GetOngs()
         {
             return await dBConexion.Ong.ToListAsync();
@@ -52,7 +53,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetOng", new { idOng = ong.IdOng }, ong);
         }
         [HttpDelete("{id}")]
-        //[Authorize(Roles ="Administrador")]
+        [Authorize(Roles ="Administrador")]
         public async Task<IActionResult> DeleteOng(int id)
         {
 

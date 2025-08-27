@@ -1,7 +1,8 @@
 ﻿using BackendProyecto.Data;
+using BackendProyecto.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BackendProyecto.Models;
 
 namespace BackendProyecto.Controllers
 {
@@ -17,6 +18,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrador , Coordinador")]
         public async Task<ActionResult<IEnumerable<Proyectos>>> GetProyectos()
         {
             var proyectos = await dBConexion.Proyecto
@@ -26,6 +28,7 @@ namespace BackendProyecto.Controllers
             return proyectos;
         }
         [HttpGet("{id}")]
+        [Authorize(Roles = "Administrador , Coordinador")]
         public async Task<ActionResult<Proyectos>> GetProyectos(int id)
         {
             var proyecto = await dBConexion.Proyecto.FindAsync(id);
@@ -35,6 +38,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Administrador , Coordinador")]
         public async Task<ActionResult<Proyectos>> PostProyecto(Proyectos proyecto)
         {
             var buscadoNombre = dBConexion.Proyecto.Any(p => p.NombreProyecto == proyecto.NombreProyecto);
@@ -65,6 +69,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction(nameof(GetProyectos), new { id = proyecto.IdProyecto }, proyecto);
         }
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador , Coordinador")]
         public async Task<IActionResult> DeleteProyecto(int id)
         {
 

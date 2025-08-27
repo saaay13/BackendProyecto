@@ -1,7 +1,8 @@
 ﻿using BackendProyecto.Data;
+using BackendProyecto.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BackendProyecto.Models;
 
 namespace BackendProyecto.Controllers
 {
@@ -17,7 +18,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
-        //[Authorize(Roles ="Administrador")]
+        [Authorize(Roles = "Administrador , Coordinador")]
         public async Task<ActionResult<IEnumerable<UsuarioRol>>> GetUsuarioRoles()
         {
             var usuarioRoles = await dBConexion.UsuarioRol
@@ -28,7 +29,7 @@ namespace BackendProyecto.Controllers
             return usuarioRoles;
         }
         [HttpPost]
-        //[Authorize(Roles ="Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<UsuarioRol>> PostUsuarioRol(UsuarioRol usuarioRol)
         {
 
@@ -58,5 +59,34 @@ namespace BackendProyecto.Controllers
 
 
         }
+        [HttpPut("{idUsuario}/{idRolActual}")]
+        [Authorize(Roles = "Administrador")]
+        public async Task<IActionResult> UpdateUsuarioRol(int idUsuario, int idRolActual, [FromBody] int nuevoRolId)
+        {
+            var usuarioRol = await dBConexion.UsuarioRol
+                .FirstOrDefaultAsync(ur => ur.IdUsuario == idUsuario && ur.IdRol == idRolActual);
+
+            if (usuarioRol == null)
+            {
+                return NotFound("La relación usuario-rol no existe");
+            }
+
+            // Eliminar la relación vieja
+            dBConexion.UsuarioRol.Remove(usuarioRol);
+
+            // Crear la nueva relación
+            var nuevoUsuarioRol = new UsuarioRol
+            {
+                IdUsuario = idUsuario,
+                IdRol = nuevoRolId,
+                FechaAsignacion = DateTime.Now
+            };
+
+            await dBConexion.UsuarioRol.AddAsync(nuevoUsuarioRol);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"El usuario {idUsuario} cambió del rol {idRolActual} al rol {nuevoRolId}");
+        }
+
     }
 }
