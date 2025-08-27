@@ -32,7 +32,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Roles ="Administrador")]
+        [Authorize(Roles ="Administrador")]
         public async Task<ActionResult<Ongs>> PostOng(Ongs ong)
         {
             var buscadoNombre = dBConexion.Ong.Any(p => p.NombreOng == ong.NombreOng);
