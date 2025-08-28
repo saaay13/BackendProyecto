@@ -49,7 +49,7 @@ namespace BackendProyecto.Controllers
             };
 
             dBConexion.Usuario.Add(usuario);
-            await dBConexion.SaveChangesAsync(); 
+            await dBConexion.SaveChangesAsync();
 
             dBConexion.UsuarioRol.Add(new UsuarioRol
             {
@@ -116,37 +116,36 @@ namespace BackendProyecto.Controllers
         public class RegisterRequest
         {
             [Required(ErrorMessage = "El nombre es obligatorio")]
-            public string Nombre { get; set; }=string.Empty;
+            public string Nombre { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "El apellido es obligatorio")]
-            public string Apellido { get; set; }=string.Empty;
+            public string Apellido { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "El email es obligatorio")]
             [EmailAddress(ErrorMessage = "El formato del correo es inválido")]
-            public string CorreoUsuario { get; set; }=string.Empty;
+            public string CorreoUsuario { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "La contraseña es obligatoria")]
             [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
             public string Password { get; set; } = string.Empty;
 
             [Phone(ErrorMessage = "El teléfono no es válido")]
-            public string Telefono { get; set; }=string.Empty;
+            public string Telefono { get; set; } = string.Empty;
         }
 
         public class LoginRequest
         {
             [Required(ErrorMessage = "El email es obligatorio")]
             [EmailAddress(ErrorMessage = "El formato del correo es inválido")]
-            public string CorreoUsuario { get; set; }=string.Empty;
+            public string CorreoUsuario { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "La contraseña es obligatoria")]
             [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
-            public string Password { get; set; }=string.Empty ;
+            public string Password { get; set; } = string.Empty;
         }
 
         // ------------------- CRUD -------------------
         [HttpGet]
-        [Authorize(Roles ="Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<Usuarios>>> GetUsuarios()
         {
             return await dBConexion.Usuario.ToListAsync();

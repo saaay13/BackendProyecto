@@ -18,7 +18,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Administrador , Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<UsuarioRol>>> GetUsuarioRoles()
         {
             var usuarioRoles = await dBConexion.UsuarioRol
@@ -38,7 +38,7 @@ namespace BackendProyecto.Controllers
             if (usuarioRol.IdRol == usuarioRol.IdUsuario)
             {
                 return BadRequest("A ese usuario ya se le asigno ese rol");
-            }    
+            }
 
             var usuario = await dBConexion.Usuario.FindAsync(usuarioRol.IdUsuario);
             if (usuario == null)
@@ -68,12 +68,11 @@ namespace BackendProyecto.Controllers
 
             if (usuarioRol == null)
             {
-                return NotFound("La relación usuario-rol no existe");
+                return NotFound("La relacion usuario-rol no existe");
             }
 
-            // Eliminar la relación vieja
+            // Eliminar la relacion vieja
             dBConexion.UsuarioRol.Remove(usuarioRol);
-
             // Crear la nueva relación
             var nuevoUsuarioRol = new UsuarioRol
             {

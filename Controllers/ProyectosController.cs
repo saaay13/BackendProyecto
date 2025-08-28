@@ -3,6 +3,7 @@ using BackendProyecto.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
 
 namespace BackendProyecto.Controllers
 {
@@ -16,9 +17,8 @@ namespace BackendProyecto.Controllers
         {
             this.dBConexion = dBConexion;
         }
-
         [HttpGet]
-        [Authorize(Roles = "Administrador , Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<Proyectos>>> GetProyectos()
         {
             var proyectos = await dBConexion.Proyecto
@@ -27,8 +27,9 @@ namespace BackendProyecto.Controllers
                     .ToListAsync();
             return proyectos;
         }
+
         [HttpGet("{id}")]
-        [Authorize(Roles = "Administrador , Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Proyectos>> GetProyectos(int id)
         {
             var proyecto = await dBConexion.Proyecto.FindAsync(id);
@@ -36,9 +37,28 @@ namespace BackendProyecto.Controllers
                 return NotFound();
             return proyecto;
         }
+        [HttpGet("public")]
+        [Authorize(Roles = "Voluntario")]
+        public async Task<ActionResult<IEnumerable<object>>> GetProyectosPublic()
+        {
+            var proyectos = await dBConexion.Proyecto
+                .Include(p => p.Ong)
+                .Include(p => p.Responsable)
+                .Select(p => new
+                {
+                    p.NombreProyecto,
+                    p.Descripcion,
+                    p.FechaInicio,
+                    p.FechaFin,
+                    Ong = p.Ong != null ? p.Ong.NombreOng : null,
+                    Responsable = p.Responsable != null ? p.Responsable.Nombre : null
+                })
+                .ToListAsync();
 
+            return Ok(proyectos);
+        }
         [HttpPost]
-        [Authorize(Roles = "Administrador , Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Proyectos>> PostProyecto(Proyectos proyecto)
         {
             var buscadoNombre = dBConexion.Proyecto.Any(p => p.NombreProyecto == proyecto.NombreProyecto);
@@ -85,6 +105,32 @@ namespace BackendProyecto.Controllers
             return Ok($"Proyecto con Id {id} eliminado correctamente");
 
 
+        }
+        [HttpPut("{idProyecto}")]
+        public async Task<IActionResult> UpdateUsuarioRol(int idUsuario, int idRolActual, [FromBody] int nuevoRolId)
+        {
+            var usuarioRol = await dBConexion.UsuarioRol
+                .FirstOrDefaultAsync(ur => ur.IdUsuario == idUsuario && ur.IdRol == idRolActual);
+
+            if (usuarioRol == null)
+            {
+                return NotFound("La relacion usuario-rol no existe");
+            }
+
+            // Eliminar la relacion vieja
+            dBConexion.UsuarioRol.Remove(usuarioRol);
+            // Crear la nueva relación
+            var nuevoUsuarioRol = new UsuarioRol
+            {
+                IdUsuario = idUsuario,
+                IdRol = nuevoRolId,
+                FechaAsignacion = DateTime.Now
+            };
+
+            await dBConexion.UsuarioRol.AddAsync(nuevoUsuarioRol);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok($"El usuario {idUsuario} cambió del rol {idRolActual} al rol {nuevoRolId}");
         }
     }
 }

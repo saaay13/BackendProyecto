@@ -17,7 +17,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
-        
+
         public async Task<ActionResult<IEnumerable<Carnets>>> GetCarnets()
         {
             var carnets = await dBConexion.Carnet
@@ -36,7 +36,7 @@ namespace BackendProyecto.Controllers
                 return BadRequest("Datos invalidos");
             }
             if (carnet.IdOng == carnet.IdUsuario)
-            { 
+            {
                 return BadRequest("La ONG ya genero el carnet con ese Usuario");
             }
             var usuario = await dBConexion.Usuario.FindAsync(carnet.IdUsuario);
@@ -62,7 +62,7 @@ namespace BackendProyecto.Controllers
         {
 
             var carnet = await dBConexion.Carnet.FindAsync(id);
-            if (carnet== null)
+            if (carnet == null)
             {
                 return NotFound("Carnet no encontrado");
             }

@@ -31,9 +31,24 @@ namespace BackendProyecto.Controllers
                 return NotFound();
             return ong;
         }
+        [HttpGet("public")]
+        [Authorize(Roles = "Voluntario,Administrador,Coordinador")]
+        public async Task<ActionResult<IEnumerable<object>>> GetOngsPublic()
+        {
+            var ongs = await dBConexion.Ong
+                .Select(o => new
+                {
+                    o.NombreOng,
+                    o.Descripcion,
+                    o.Direccion,
+                    o.Telefono
+                })
+                .ToListAsync();
 
+            return Ok(ongs);
+        }
         [HttpPost]
-        [Authorize(Roles ="Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<Ongs>> PostOng(Ongs ong)
         {
             var buscadoNombre = dBConexion.Ong.Any(p => p.NombreOng == ong.NombreOng);
@@ -53,7 +68,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetOng", new { idOng = ong.IdOng }, ong);
         }
         [HttpDelete("{id}")]
-        [Authorize(Roles ="Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteOng(int id)
         {
 
@@ -69,6 +84,8 @@ namespace BackendProyecto.Controllers
             return Ok($"Ong con Id {id} eliminado correctamente");
 
         }
+
+
 
     }
 }

@@ -8,7 +8,7 @@ namespace BackendProyecto.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    
+
     public class RolController : ControllerBase
     {
         private readonly DBConexion dBConexion;
@@ -19,16 +19,16 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<IEnumerable<Roles>>> GetRoles()
         {
             return await dBConexion.Rol.ToListAsync();
         }
         [HttpPost]
-        [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<Roles>> PostRol(Roles rol)
         {
-            var buscadoNombre = dBConexion.Rol.Any(p => p.NombreRol== rol.NombreRol);
+            var buscadoNombre = dBConexion.Rol.Any(p => p.NombreRol == rol.NombreRol);
             if (buscadoNombre)
             {
                 return BadRequest("El Rol ya existe");
@@ -44,12 +44,12 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetRoles", new { id = rol.IdRol }, rol);
         }
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteRol(int id)
         {
 
             var rol = await dBConexion.Rol.FindAsync(id);
-            if (rol== null)
+            if (rol == null)
             {
                 return NotFound("Rol no encontrado");
             }

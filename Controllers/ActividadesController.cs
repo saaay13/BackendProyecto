@@ -18,7 +18,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Administrador , Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<Actividades>>> GetActividades()
         {
             return await dBConexion.Actividad
@@ -36,8 +36,47 @@ namespace BackendProyecto.Controllers
             if (actividad == null) return NotFound();
             return actividad;
         }
+        [HttpGet("public")]
+        [Authorize(Roles = "Administrador,Coordinador,Voluntario")]
+
+        public async Task<ActionResult<IEnumerable<object>>> GetActividadesPublic()
+        {
+            var actividades = await dBConexion.Actividad
+                                  .Include(a => a.Proyecto)
+                                      .ThenInclude(p => p.Responsable)
+                                  .Include(a => a.Proyecto)
+                                      .ThenInclude(p => p.Ong)
+                                  .OrderBy(a => a.FechaActividad)
+                                  .ToListAsync();
+
+
+            var resultado = actividades.Select(a => new
+            {
+                a.NombreActividad,
+                a.FechaActividad,
+                a.HoraInicio,
+                a.HoraFin,
+                a.Lugar,
+                a.CupoMaximo,
+                Proyecto = a.Proyecto != null ? new
+                {
+                    a.Proyecto.NombreProyecto,
+                    Responsable = a.Proyecto.Responsable != null ? new
+                    {
+                        a.Proyecto.Responsable.Nombre,
+                    } : null,
+                    Ong = a.Proyecto.Ong != null ? new
+                    {
+                        a.Proyecto.Ong.NombreOng
+                    } : null
+                } : null
+            });
+
+            return Ok(resultado);
+        }
 
         [HttpPost]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Actividades>> PostActividad(Actividades actividad)
         {
             var buscadoNombre = dBConexion.Actividad.Any(p => p.NombreActividad == actividad.NombreActividad);
@@ -62,6 +101,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetActividad", new { id = actividad.IdActividad }, actividad);
         }
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteActividad(int id)
         {
 

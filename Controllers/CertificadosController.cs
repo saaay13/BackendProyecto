@@ -1,7 +1,8 @@
 ﻿using BackendProyecto.Data;
+using BackendProyecto.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BackendProyecto.Models;
 
 namespace BackendProyecto.Controllers
 {
@@ -48,18 +49,33 @@ namespace BackendProyecto.Controllers
             if (certificado == null) return NotFound();
             return certificado;
         }
+        [HttpGet("mis-certificados/{idUsuario}")]
+        [Authorize(Roles = "Voluntario,Coordinador,Administrador")]
+        public async Task<ActionResult<IEnumerable<object>>> GetMisCertificados(int idUsuario)
+        {
+            var certificados = await dBConexion.Certificado
+                .Include(c => c.Actividad)
+                .Where(c => c.IdUsuario == idUsuario)
+                .Select(c => new
+                {
+                    c.IdCertificado,
+                    c.Actividad.NombreActividad,
+                    c.Actividad.FechaActividad,
+                    c.Actividad.Lugar
+                })
+                .ToListAsync();
+
+            return Ok(certificados);//cambios
+        }
+
 
         [HttpPost]
-        //[Authorize(Roles ="Administrador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Certificados>> PostCertificado(Certificados certificado)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest("Datos invalidos");
-            }
-            if (certificado.IdActividad == certificado.IdUsuario)
-            { 
-                return BadRequest("El certificado de ese usuario en esa actividad ya se genero ");
             }
 
             var usuario = await dBConexion.Usuario.FindAsync(certificado.IdUsuario);
@@ -73,6 +89,11 @@ namespace BackendProyecto.Controllers
             {
                 return BadRequest("La actividad no existe");
             }
+            var yaGenerado = await dBConexion.Certificado
+             .AnyAsync(c => c.IdActividad == certificado.IdActividad && c.IdUsuario == certificado.IdUsuario);
+
+            if (yaGenerado)
+                return BadRequest("El certificado de ese usuario en esa actividad ya fue generado");
 
             dBConexion.Certificado.Add(certificado);
             await dBConexion.SaveChangesAsync();
@@ -80,7 +101,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction("GetCertificado", new { id = certificado.IdCertificado }, certificado);
         }
         [HttpDelete("{id}")]
-        //[Authorize(Roles ="Administrador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteCertificado(int id)
         {
 
