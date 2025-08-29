@@ -90,25 +90,42 @@ namespace BackendProyecto.Controllers
                                     .Include(ur => ur.Rol)
                                     .FirstOrDefaultAsync(ur => ur.IdUsuario == usuario.IdUsuario);
 
-            var claims = new[]
-            {
-        new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
-        new Claim(ClaimTypes.Email, usuario.CorreoUsuario),
-        new Claim(ClaimTypes.Role, rolUsuario?.Rol?.NombreRol ?? "Voluntario")
-    };
+            // Obtener todos los roles del usuario (por si tuviera varios)
+            var roles = await dBConexion.UsuarioRol
+                .Include(ur => ur.Rol)
+                .Where(ur => ur.IdUsuario == usuario.IdUsuario)
+                .Select(ur => ur.Rol!.NombreRol)
+                .ToListAsync();
 
+            // Si no hay roles, forzar Voluntario por defecto
+            if (roles.Count == 0) roles.Add("Voluntario");
+
+            // Claims base
+            var claims = new List<Claim>
+                {
+                    new(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
+                    new(ClaimTypes.Email, usuario.CorreoUsuario)
+                };
+
+            // Agregar todos los roles como ClaimTypes.Role
+            foreach (var r in roles.Distinct())
+                claims.Add(new Claim(ClaimTypes.Role, r));
+
+            // KEY + TOKEN
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
+            // ¡Importantísimo: UTC!
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
-                expires: DateTime.Now.AddHours(2),
+                expires: DateTime.UtcNow.AddHours(2),
                 signingCredentials: creds
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
+
         }
 
 
@@ -175,5 +192,16 @@ namespace BackendProyecto.Controllers
 
             return Ok($"Usuario con Id {id} eliminado correctamente");
         }
+        [Authorize]
+        [HttpGet("me")]
+        public IActionResult Me()
+        {
+            var id = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var mail = User.FindFirstValue(ClaimTypes.Email);
+            var roles = User.FindAll(ClaimTypes.Role).Select(r => r.Value).ToList();
+
+            return Ok(new { id, mail, roles });
+        }
+
     }
 }
