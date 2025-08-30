@@ -44,6 +44,17 @@ namespace BackendProyecto.Data
                 .WithMany()
                 .HasForeignKey(i => i.IdActividad)
                 .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<UsuarioRol>()
+                .HasOne(ur => ur.Usuario)
+                .WithMany() // <- sin u => u.UsuarioRoles
+                .HasForeignKey(ur => ur.IdUsuario)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UsuarioRol>()
+                .HasOne(ur => ur.Rol)
+                .WithMany() // <- sin r => r.UsuarioRoles
+                .HasForeignKey(ur => ur.IdRol)
+                .OnDelete(DeleteBehavior.Restrict);
 
         }
 
