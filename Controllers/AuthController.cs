@@ -162,36 +162,7 @@ namespace BackendProyecto.Controllers
         }
 
         // ------------------- CRUD -------------------
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Usuarios>>> GetUsuarios()
-        {
-            return await dBConexion.Usuario.ToListAsync();
-        }
-
-        [HttpGet("{id}")]
-        [Authorize(Roles = "Administrador,Coordinador")]
-        public async Task<ActionResult<Usuarios>> GetUsuario(int id)
-        {
-            var usuario = await dBConexion.Usuario.FindAsync(id);
-            if (usuario == null)
-                return NotFound("Usuario no encontrado");
-
-            return usuario;
-        }
-
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador,Coordinador")]
-        public async Task<IActionResult> DeleteUsuario(int id)
-        {
-            var usuario = await dBConexion.Usuario.FindAsync(id);
-            if (usuario == null)
-                return NotFound("Usuario no encontrado");
-
-            dBConexion.Usuario.Remove(usuario);
-            await dBConexion.SaveChangesAsync();
-
-            return Ok($"Usuario con Id {id} eliminado correctamente");
-        }
+        
         [Authorize]
         [HttpGet("me")]
         public IActionResult Me()

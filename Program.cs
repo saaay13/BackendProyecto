@@ -13,11 +13,14 @@ var builder = WebApplication.CreateBuilder(args);
 var db = builder.Configuration.GetConnectionString("conexion");
 builder.Services.AddDbContext<DBConexion>(options => options.UseSqlServer(db));
 
-// Controllers
+// Controllers (UNA sola llamada) + JSON options
 builder.Services.AddControllers()
     .AddJsonOptions(o =>
     {
+        // Para enums como string (opcional)
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        // Para evitar ciclos en las entidades EF (Usuario <-> UsuarioRol)
+        o.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
     });
 
 // Swagger + JWT
@@ -28,7 +31,7 @@ builder.Services.AddSwaggerGen(c =>
 
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = @"JWT Authorization header using the Bearer scheme. Example: 'Bearer 12345abcdef'",
+        Description = "JWT en el header. Ej: 'Bearer 12345abcdef'",
         Name = "Authorization",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
@@ -50,11 +53,12 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// CORS (si el frontend hará llamadas desde el navegador)  <<< AGREGAR SI LO USARÁS
+// CORS (solo si vas a llamar la API desde el navegador)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Frontend", p => p
-        .WithOrigins("https://localhost:5001", "http://localhost:5000") // ajusta tus puertos/orígenes
+        // Ajusta a los PUERTOS reales de tu frontend (Kestrel/IIS Express)
+        .WithOrigins("https://localhost:5001", "http://localhost:5000")
         .AllowAnyHeader()
         .AllowAnyMethod()
         .AllowCredentials());
@@ -78,9 +82,8 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])),
 
-        // Recomendados
-        ClockSkew = TimeSpan.FromMinutes(1), // o TimeSpan.Zero en entornos controlados
-        RoleClaimType = ClaimTypes.Role,     // expl. mapea roles
+        ClockSkew = TimeSpan.FromMinutes(1),
+        RoleClaimType = ClaimTypes.Role,
         NameClaimType = ClaimTypes.NameIdentifier
     };
 
@@ -116,10 +119,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// >>> ORDEN RECOMENDADO
 app.UseRouting();
+app.UseCors("Frontend");
 
-app.UseCors("Frontend");       // <<< si usas CORS (llamadas desde el navegador)
 app.UseAuthentication();
 app.UseAuthorization();
 
