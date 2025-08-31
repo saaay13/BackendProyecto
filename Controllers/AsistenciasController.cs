@@ -18,6 +18,7 @@ namespace BackendProyecto.Controllers
             this.dBConexion = dBConexion;
         }
 
+
         [HttpGet]
        // [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<Asistencias>>> GetAsitencias()
@@ -80,30 +81,23 @@ namespace BackendProyecto.Controllers
 
 
         [HttpPost]
-       // [Authorize(Roles = "Administrador,Coordinador")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Asistencias>> PostAsistencia(Asistencias asistencia)
         {
-            if (!ModelState.IsValid)
-                return BadRequest("Datos inválidos");
+            if (!ModelState.IsValid) return BadRequest("Datos inválidos");
 
-            // Verificar que la inscripción exista
             var inscripcion = await dBConexion.Inscripcion.FindAsync(asistencia.IdInscripcion);
-            if (inscripcion == null)
-                return BadRequest("La inscripción no existe");
+            if (inscripcion == null) return BadRequest("La inscripción no existe");
 
-            // Verificar si ya existe una asistencia para esta inscripción
-            var yaRegistrada = await dBConexion.Asistencia
-                .AnyAsync(a => a.IdInscripcion == asistencia.IdInscripcion);
+            // Registrar (permitiendo múltiples registros)
+            asistencia.HoraResgistro = asistencia.HoraResgistro == default ? DateTime.Now : asistencia.HoraResgistro;
 
-            if (yaRegistrada)
-                return BadRequest("La asistencia para esta inscripción ya fue registrada");
-
-            // Agregar la asistencia
             dBConexion.Asistencia.Add(asistencia);
             await dBConexion.SaveChangesAsync();
 
-            return CreatedAtAction("GetAsistencia", new { id = asistencia.IdAsistencia }, asistencia);
+            return CreatedAtAction(nameof(GetAsistencia), new { id = asistencia.IdAsistencia }, asistencia);
         }
+
 
         [HttpDelete("{id}")]
        // [Authorize(Roles = "Administrador,Coordinador")]
@@ -124,6 +118,46 @@ namespace BackendProyecto.Controllers
 
 
         }
+        // GET: api/Asistencias/por-inscripcion/999
+        [HttpGet("por-inscripcion/{idInscripcion:int}")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
+        public async Task<ActionResult<IEnumerable<object>>> GetPorInscripcion(int idInscripcion)
+        {
+            var existe = await dBConexion.Inscripcion.AnyAsync(i => i.IdInscripcion == idInscripcion);
+            if (!existe) return NotFound("Inscripción no existe.");
+
+            var lista = await dBConexion.Asistencia
+                .Where(a => a.IdInscripcion == idInscripcion)
+                .OrderBy(a => a.HoraResgistro)
+                .Select(a => new
+                {
+                    a.IdAsistencia,
+                    a.IdInscripcion,
+                    a.Asistio,
+                    a.Observacion,
+                    a.HoraResgistro
+                })
+                .ToListAsync();
+
+            return Ok(lista);
+        }
+        // PUT: api/Asistencias/123
+        [HttpPut("{id:int}")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
+        public async Task<IActionResult> PutAsistencia(int id, [FromBody] Asistencias dto)
+        {
+            var entity = await dBConexion.Asistencia.FindAsync(id);
+            if (entity is null) return NotFound("Asistencia no encontrada.");
+
+            // Solo campos editables
+            entity.Asistio = dto.Asistio;
+            entity.Observacion = dto.Observacion;
+            // entity.HoraResgistro = dto.HoraResgistro; // si quieres permitirlo
+
+            await dBConexion.SaveChangesAsync();
+            return NoContent();
+        }
+
 
     }
 }

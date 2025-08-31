@@ -16,6 +16,20 @@ namespace BackendProyecto.Controllers
         {
             this.dBConexion = dBConexion;
         }
+        public record InscripcionListItem(
+            int IdInscripcion,
+            int IdUsuario,
+            string NombreUsuario,
+            string EstadoInscripcion,
+            DateTime FechaInscripcion
+        );
+
+        public class InscripcionUpdateDto
+        {
+            public int IdInscripcion { get; set; }
+            public string EstadoInscripcion { get; set; } = "Pendiente"; // Pendiente|Confirmada|Cancelada
+        }
+
 
         // GET: api/Inscripciones
         [HttpGet]
@@ -157,6 +171,89 @@ namespace BackendProyecto.Controllers
             return Ok($"Inscripcion con Id {id} eliminado correctamente");
 
 
+        }
+        // GET: api/Inscripciones/por-actividad/10?soloConfirmadas=true
+        [HttpGet("por-actividad/{idActividad:int}")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
+        public async Task<ActionResult<IEnumerable<InscripcionListItem>>> GetPorActividad(
+            int idActividad, bool soloConfirmadas = false)
+        {
+            var existeAct = await dBConexion.Actividad.AnyAsync(a => a.IdActividad == idActividad);
+            if (!existeAct) return NotFound("La actividad no existe.");
+
+            var q = dBConexion.Inscripcion
+                .Include(i => i.Usuario)
+                .Where(i => i.IdActividad == idActividad);
+
+            if (soloConfirmadas)
+                q = q.Where(i => i.EstadoInscripcion == Inscripciones.EstadoInscripcionEnum.Confirmada);
+
+            var lista = await q
+                .OrderBy(i => i.FechaInscripcion)
+                .Select(i => new InscripcionListItem(
+                    i.IdInscripcion,
+                    i.IdUsuario,
+                    i.Usuario != null ? (i.Usuario.Nombre + " " + i.Usuario.Apellido) : "Usuario",
+                    i.EstadoInscripcion.ToString(),
+                    i.FechaInscripcion
+                ))
+                .ToListAsync();
+
+            return Ok(lista);
+        }
+        // GET: api/Inscripciones/por-usuario/5
+        [HttpGet("por-usuario/{idUsuario:int}")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
+        public async Task<ActionResult<IEnumerable<object>>> GetPorUsuario(int idUsuario)
+        {
+            var lista = await dBConexion.Inscripcion
+                .Include(i => i.Actividad)
+                .Where(i => i.IdUsuario == idUsuario)
+                .OrderByDescending(i => i.FechaInscripcion)
+                .Select(i => new
+                {
+                    i.IdInscripcion,
+                    i.IdActividad,
+                    NombreActividad = i.Actividad != null ? i.Actividad.NombreActividad : "",
+                    FechaActividad = i.Actividad != null ? i.Actividad.FechaActividad : DateTime.MinValue,
+                    Lugar = i.Actividad != null ? i.Actividad.Lugar : null,
+                    EstadoInscripcion = i.EstadoInscripcion.ToString(),
+                    i.FechaInscripcion
+                })
+                .ToListAsync();
+
+            return Ok(lista);
+        }
+        // PUT: api/Inscripciones/123
+        [HttpPut("{id:int}")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
+        public async Task<IActionResult> PutInscripcion(int id, [FromBody] InscripcionUpdateDto dto)
+        {
+            var insc = await dBConexion.Inscripcion
+                .Include(i => i.Actividad)
+                .FirstOrDefaultAsync(i => i.IdInscripcion == id);
+
+            if (insc is null) return NotFound("Inscripción no encontrada.");
+
+            if (!Enum.TryParse(dto.EstadoInscripcion, ignoreCase: true,
+                out Inscripciones.EstadoInscripcionEnum nuevo))
+                return BadRequest("EstadoInscripcion inválido.");
+
+            // Si se quiere Confirmar, valida cupo (sin alterar CupoMaximo)
+            if (nuevo == Inscripciones.EstadoInscripcionEnum.Confirmada)
+            {
+                var confirmadas = await dBConexion.Inscripcion
+                    .CountAsync(i => i.IdActividad == insc.IdActividad
+                                  && i.EstadoInscripcion == Inscripciones.EstadoInscripcionEnum.Confirmada
+                                  && i.IdInscripcion != id);
+
+                if (insc.Actividad != null && confirmadas >= insc.Actividad.CupoMaximo)
+                    return BadRequest("No se puede confirmar: cupo máximo alcanzado.");
+            }
+
+            insc.EstadoInscripcion = nuevo;
+            await dBConexion.SaveChangesAsync();
+            return NoContent();
         }
 
     }
