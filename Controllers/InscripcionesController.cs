@@ -19,7 +19,7 @@ namespace BackendProyecto.Controllers
 
         // GET: api/Inscripciones
         [HttpGet]
-        [Authorize(Roles = "Administrador,Coordinador")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<Inscripciones>>> GetInscripciones()
         {
             var inscripciones = await dBConexion.Inscripcion
@@ -36,7 +36,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet("{id}")]
-        [Authorize(Roles = "Administrador")]
+        //[Authorize(Roles = "Administrador")]
         public async Task<ActionResult<Inscripciones>> GetInscripcion(int id)
         {
             var inscripcion = await dBConexion.Inscripcion
@@ -55,7 +55,7 @@ namespace BackendProyecto.Controllers
             return Ok(inscripcion);
         }
         [HttpGet("actividad/{idActividad}/compañeros/{idUsuario}")]
-        [Authorize(Roles = "Administrador,Coordinador,Voluntario")]
+        //[Authorize(Roles = "Administrador,Coordinador,Voluntario")]
         public async Task<ActionResult<IEnumerable<object>>> GetCompanerosActividad(int idActividad, int idUsuario)
         {
 
@@ -77,7 +77,7 @@ namespace BackendProyecto.Controllers
             return Ok(companeros);
         }
         [HttpGet("actividad/{idActividad}/usuarios")]
-        [Authorize(Roles = "Administrador,Coordinador")]
+       // [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<object>>> GetUsuariosPorActividad(int idActividad)
         {
 
@@ -101,7 +101,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Administrador,Coordinador,Voluntario")]
+        //[Authorize(Roles = "Administrador,Coordinador,Voluntario")]
         public async Task<ActionResult<Inscripciones>> PostInscripcion(Inscripciones inscripcion)
         {
             if (!ModelState.IsValid)
@@ -141,7 +141,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador,Coordinador")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteIncripcion(int id)
         {
 

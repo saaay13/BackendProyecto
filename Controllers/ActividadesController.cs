@@ -69,7 +69,7 @@ namespace BackendProyecto.Controllers
 
         // ===================== LISTA (Admin/Coord) =====================
         [HttpGet]
-        [Authorize(Roles = "Administrador,Coordinador")]
+       // [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<ActividadListDto>>> GetActividades()
         {
             var lista = await dBConexion.Actividad
@@ -94,7 +94,7 @@ namespace BackendProyecto.Controllers
 
         // ===================== DETALLE (Admin/Coord) =====================
         [HttpGet("{id:int}")]
-        [Authorize(Roles = "Administrador,Coordinador")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<ActividadDetalleDto>> GetActividad(int id)
         {
             var a = await dBConexion.Actividad
@@ -157,7 +157,7 @@ namespace BackendProyecto.Controllers
 
         // ===================== CREAR =====================
         [HttpPost]
-        [Authorize(Roles = "Administrador,Coordinador")]
+       // [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult> PostActividad([FromBody] ActividadInput input)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -196,7 +196,7 @@ namespace BackendProyecto.Controllers
 
         // ===================== EDITAR =====================
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Administrador,Coordinador")]
+       // [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> PutActividad(int id, [FromBody] ActividadInput input)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -232,7 +232,7 @@ namespace BackendProyecto.Controllers
 
         // ===================== ELIMINAR =====================
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Administrador,Coordinador")]
+       // [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteActividad(int id)
         {
             var actividad = await dBConexion.Actividad.FindAsync(id);

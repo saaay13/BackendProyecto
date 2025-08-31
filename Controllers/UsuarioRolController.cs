@@ -15,7 +15,7 @@ namespace BackendProyecto.Controllers
 
         // GET: api/UsuarioRol
         [HttpGet]
-        [Authorize(Roles = "Administrador,Coordinador")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<UsuarioRol>>> GetUsuarioRoles()
         {
             var lista = await dBConexion.UsuarioRol
@@ -29,7 +29,7 @@ namespace BackendProyecto.Controllers
         // POST: api/UsuarioRol
         // Asigna un rol a un usuario (no duplica relaciones)
         [HttpPost]
-        [Authorize(Roles = "Administrador")]
+       // [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PostUsuarioRol([FromBody] UsuarioRol usuarioRol)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -57,7 +57,7 @@ namespace BackendProyecto.Controllers
         // PUT: api/UsuarioRol/{idUsuario}/{idRolActual}
         // Cambia el rol asignado (no toca tabla Roles)
         [HttpPut("{idUsuario:int}/{idRolActual:int}")]
-        [Authorize(Roles = "Administrador")]
+        //[Authorize(Roles = "Administrador")]
         public async Task<IActionResult> UpdateUsuarioRol(
             int idUsuario, int idRolActual, [FromBody] int nuevoRolId)
         {
@@ -98,7 +98,7 @@ namespace BackendProyecto.Controllers
         // DELETE: api/UsuarioRol/{idUsuario}/{idRol}
         // Quita la asignación (NO elimina el rol)
         [HttpDelete("{idUsuario:int}/{idRol:int}")]
-        [Authorize(Roles = "Administrador")]
+        //[Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteUsuarioRol(int idUsuario, int idRol)
         {
             var entity = await dBConexion.UsuarioRol

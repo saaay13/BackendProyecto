@@ -1,7 +1,8 @@
 ﻿using BackendProyecto.Data;
+using BackendProyecto.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using BackendProyecto.Models;
 
 namespace BackendProyecto.Controllers
 {
@@ -28,34 +29,67 @@ namespace BackendProyecto.Controllers
             return carnets;
         }
         [HttpPost]
-        //[Authorize(Roles ="Administrador")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Carnets>> PostCarnet(Carnets carnet)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest("Datos invalidos");
-            }
-            if (carnet.IdOng == carnet.IdUsuario)
-            {
-                return BadRequest("La ONG ya genero el carnet con ese Usuario");
-            }
-            var usuario = await dBConexion.Usuario.FindAsync(carnet.IdUsuario);
-            if (usuario == null)
-            {
-                return BadRequest("El usuario no existe");
-            }
+            if (!ModelState.IsValid) return BadRequest("Datos invalidos");
+
+            // 1) Usuario y ONG existen
+            var usuario = await dBConexion.Usuario
+                .FirstOrDefaultAsync(u => u.IdUsuario == carnet.IdUsuario);
+            if (usuario is null) return BadRequest("El usuario no existe");
 
             var ong = await dBConexion.Ong.FindAsync(carnet.IdOng);
-            if (ong == null)
-            {
-                return BadRequest("La ong no existe");
-            }
+            if (ong is null) return BadRequest("La ong no existe");
+
+            // 2) Verificar rol SIN navegación (join por tabla puente)
+            var rolesUsuario = await dBConexion.UsuarioRol
+                .Include(ur => ur.Rol)
+                .Where(ur => ur.IdUsuario == carnet.IdUsuario)
+                .Select(ur => ur.Rol.NombreRol)
+                .ToListAsync();
+
+            var esElegibleRol = rolesUsuario.Any(r =>
+                string.Equals(r, "Voluntario", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r, "Coordinador", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(r, "Administrador", StringComparison.OrdinalIgnoreCase));
+
+            if (!esElegibleRol)
+                return BadRequest("El usuario no tiene rol de Voluntario (o superior).");
+
+            // 3) Al menos una inscripción CONFIRMADA
+            bool tieneInscripcion = await dBConexion.Inscripcion
+                .AnyAsync(i => i.IdUsuario == carnet.IdUsuario
+                            && i.EstadoInscripcion == Inscripciones.EstadoInscripcionEnum.Confirmada);
+            if (!tieneInscripcion) return BadRequest("El usuario no tiene inscripciones confirmadas.");
+
+            // 4) Evitar duplicado vigente por usuario y por ONG
+            var hoy = DateTime.UtcNow.Date;
+            var carnetVigente = await dBConexion.Carnet
+                .AnyAsync(c => c.IdUsuario == carnet.IdUsuario && c.FechaVencimiento >= hoy);
+            if (carnetVigente) return BadRequest("El usuario ya tiene un carnet vigente.");
+
+            var duplicadoPorOng = await dBConexion.Carnet
+                .AnyAsync(c => c.IdOng == carnet.IdOng && c.IdUsuario == carnet.IdUsuario && c.FechaVencimiento >= hoy);
+            if (duplicadoPorOng) return BadRequest("Ya existe un carnet vigente para ese usuario en esa ONG.");
+
+            // 5) Completar SOLO fechas (evitamos asignar CodigoVerificacion para no chocar tipos)
+            if (carnet.FechaEmision == default) carnet.FechaEmision = DateTime.UtcNow;
+            if (carnet.FechaVencimiento == default) carnet.FechaVencimiento = DateTime.UtcNow.AddYears(1);
+
+            // Si QUIERES generar Código, elige UNA de estas líneas según tu modelo (déjalas comentadas si no estás seguro):
+            // (A) Si CodigoVerificacion es string:
+            // carnet.CodigoVerificacion = $"V-{DateTime.UtcNow:yyyy}{carnet.IdUsuario:D6}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
+            // (B) Si CodigoVerificacion es Guid:
+            // carnet.CodigoVerificacion = Guid.NewGuid();
 
             dBConexion.Carnet.Add(carnet);
             await dBConexion.SaveChangesAsync();
 
-            return CreatedAtAction("GetCarnets", new { idCarnet = carnet.IdCarnet }, carnet);
+            return CreatedAtAction(nameof(GetCarnetById), new { id = carnet.IdCarnet }, carnet);
         }
+
+
         [HttpDelete("{id}")]
         //[Authorize(Roles ="Administrador")]
         public async Task<IActionResult> DeleteCarnet(int id)
@@ -74,6 +108,46 @@ namespace BackendProyecto.Controllers
 
 
 
+        }
+        // GET: api/Carnets/5
+        [HttpGet("{id:int}")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
+        public async Task<ActionResult<Carnets>> GetCarnetById(int id)
+        {
+            var carnet = await dBConexion.Carnet
+                .Include(c => c.Usuario)
+                .Include(c => c.Ong)
+                .FirstOrDefaultAsync(c => c.IdCarnet == id);
+
+            return carnet is null ? NotFound("Carnet no encontrado") : Ok(carnet);
+        }
+
+        // PUT: api/Carnets/5
+        [HttpPut("{id:int}")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
+        public async Task<IActionResult> PutCarnet(int id, [FromBody] Carnets dto)
+        {
+            var entity = await dBConexion.Carnet.FindAsync(id);
+            if (entity is null) return NotFound("Carnet no encontrado.");
+
+            // Validaciones básicas
+            var usuario = await dBConexion.Usuario.FindAsync(dto.IdUsuario);
+            if (usuario is null) return BadRequest("El usuario no existe.");
+
+            var ong = await dBConexion.Ong.FindAsync(dto.IdOng);
+            if (ong is null) return BadRequest("La ong no existe.");
+
+            // Actualizar campos editables
+            entity.IdUsuario = dto.IdUsuario;
+            entity.IdOng = dto.IdOng;
+            entity.FechaEmision = dto.FechaEmision;
+            entity.FechaVencimiento = dto.FechaVencimiento;
+            entity.Beneficios = dto.Beneficios;
+            entity.CodigoVerificacion = dto.CodigoVerificacion; // puedes bloquearlo si no quieres que cambie
+                                                                // entity.EstadoInscripcion = dto.EstadoInscripcion; // si decides permitir
+
+            await dBConexion.SaveChangesAsync();
+            return NoContent();
         }
 
     }

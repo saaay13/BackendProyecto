@@ -19,7 +19,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Administrador,Coordinador")]
+       // [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<Asistencias>>> GetAsitencias()
         {
             var asistencias = await dBConexion.Asistencia
@@ -38,7 +38,7 @@ namespace BackendProyecto.Controllers
             return asistencias;
         }
         [HttpGet("{id}")]
-        [Authorize(Roles = "Administrador,Coordinador")]
+        //[Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Asistencias>> GetAsistencia(int id)
         {
             var asistencia = await dBConexion.Asistencia
@@ -57,7 +57,7 @@ namespace BackendProyecto.Controllers
             return asistencia;
         }
         [HttpGet("mis-asistencias/{idUsuario}")]
-        [Authorize(Roles = "Voluntario")]
+        //[Authorize(Roles = "Voluntario")]
         public async Task<ActionResult<IEnumerable<object>>> GetMisAsistencias(int idUsuario)
         {
             var asistencias = await dBConexion.Asistencia
@@ -80,7 +80,7 @@ namespace BackendProyecto.Controllers
 
 
         [HttpPost]
-        [Authorize(Roles = "Administrador,Coordinador")]
+       // [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Asistencias>> PostAsistencia(Asistencias asistencia)
         {
             if (!ModelState.IsValid)
@@ -106,7 +106,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Administrador,Coordinador")]
+       // [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteAsistencia(int id)
         {
 
