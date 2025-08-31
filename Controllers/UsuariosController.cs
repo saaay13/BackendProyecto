@@ -78,8 +78,6 @@ namespace BackendProyecto.Controllers
             return Ok(u);
         }
 
-        // PUT: api/Usuarios/5
-        // Edita datos del usuario (NO roles, NO password)
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateUsuario(int id, [FromBody] UsuarioUpdateRequest request)
         {
@@ -129,6 +127,34 @@ namespace BackendProyecto.Controllers
 
             return Ok($"Usuario con Id {id} eliminado y roles desvinculados.");
         }
+        // DTO solo para contraseña
+        public class PasswordUpdateRequest
+        {
+            [Required(ErrorMessage = "La contraseña es obligatoria")]
+            [MinLength(6, ErrorMessage = "La contraseña debe tener al menos 6 caracteres")]
+            public string NewPassword { get; set; } = string.Empty;
+        }
+
+        // PUT: api/Usuarios/{id}/password
+        [HttpPut("{id:int}/password")]
+        [Authorize(Roles = "Administrador,Coordinador")]
+
+        public async Task<IActionResult> UpdatePassword(int id, [FromBody] PasswordUpdateRequest req)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var usuario = await dbConexion.Usuario.FindAsync(id);
+            if (usuario is null)
+                return NotFound("Usuario no encontrado.");
+
+            // Actualizar contraseña con BCrypt
+            usuario.Password = BCrypt.Net.BCrypt.HashPassword(req.NewPassword);
+
+            await dbConexion.SaveChangesAsync();
+            return Ok(new { mensaje = "Contraseña actualizada correctamente." });
+        }
+
 
     }
 }
