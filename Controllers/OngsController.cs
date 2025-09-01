@@ -19,9 +19,8 @@ namespace BackendProyecto.Controllers
 
         // =================== LECTURA (ADMIN/COORD) ===================
 
-        // Listado completo (gestión interna)
         [HttpGet]
-        //[Authorize(Roles = "Administrador,Coordinador")] // quita espacios después de comas
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<IEnumerable<Ongs>>> GetOngs()
         {
             return await dBConexion.Ong.ToListAsync();
@@ -57,7 +56,7 @@ namespace BackendProyecto.Controllers
 
         // =================== CREAR (ADMIN) ===================
         [HttpPost]
-        //[Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<Ongs>> PostOng([FromBody] Ongs ong)
         {
             if (!ModelState.IsValid)
@@ -74,7 +73,7 @@ namespace BackendProyecto.Controllers
 
         // =================== ACTUALIZAR (ADMIN/COORD) ===================
         [HttpPut("{idOng:int}")]
-       // [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PutOng(int idOng, [FromBody] Ongs input)
         {
             if (idOng != input.IdOng)
@@ -103,7 +102,7 @@ namespace BackendProyecto.Controllers
 
         // =================== ELIMINAR (ADMIN) ===================
         [HttpDelete("{id:int}")]
-        //[Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteOng(int id)
         {
             var ong = await dBConexion.Ong.FindAsync(id);

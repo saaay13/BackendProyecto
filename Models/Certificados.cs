@@ -22,11 +22,7 @@ namespace BackendProyecto.Models
         [Required]
         [MaxLength(36)]
         public string CodigoVerificacion { get; set; }=Guid.NewGuid().ToString();
-        //
-        /*
-        [Required]
-        [MaxLength(300)]
-        public string UrlCertificado { get; set; } = string.Empty;
-        */
+        [MaxLength(500)]
+        public string? UrlCertificado { get; set; }
     }
 }

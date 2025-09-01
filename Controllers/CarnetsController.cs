@@ -71,12 +71,42 @@ namespace BackendProyecto.Controllers
 
             if (carnet.FechaEmision == default) carnet.FechaEmision = DateTime.UtcNow;
             if (carnet.FechaVencimiento == default) carnet.FechaVencimiento = DateTime.UtcNow.AddYears(1);
-
+            if (carnet.CodigoVerificacion == default) carnet.CodigoVerificacion = Guid.NewGuid();
 
             dBConexion.Carnet.Add(carnet);
+            await dBConexion.SaveChangesAsync();  // ⚡ ya tiene IdCarnet
+
+            // 🔗 Construir URL absoluta al PDF
+            var pdfUrl = Url.Action(nameof(GetCarnetPdf), "Carnets", new { id = carnet.IdCarnet },
+                                     Request.Scheme, Request.Host.ToString());
+
+            carnet.UrlCarnet = pdfUrl;
             await dBConexion.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetCarnetById), new { id = carnet.IdCarnet }, carnet);
+        }
+        [HttpGet("{id:int}/pdf")]
+        public async Task<IActionResult> GetCarnetPdf(int id, [FromServices] IWebHostEnvironment env)
+        {
+            var carnet = await dBConexion.Carnet
+                .Include(c => c.Usuario)
+                .Include(c => c.Ong)
+                .FirstOrDefaultAsync(c => c.IdCarnet == id);
+
+            if (carnet is null) return NotFound("Carnet no encontrado.");
+
+            // Ruta al logo dentro de wwwroot
+            var logoPath = Path.Combine(env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
+                                        "img", "LogoSinFondo.png");
+
+            byte[]? logoBytes = null;
+            if (System.IO.File.Exists(logoPath))
+            {
+                logoBytes = await System.IO.File.ReadAllBytesAsync(logoPath);
+            }
+
+            var pdfBytes = PdfCarnetBuilder.BuildCarnet(carnet, logoBytes);
+            return File(pdfBytes, "application/pdf", $"carnet-{id}.pdf");
         }
 
 
@@ -133,8 +163,8 @@ namespace BackendProyecto.Controllers
             entity.FechaEmision = dto.FechaEmision;
             entity.FechaVencimiento = dto.FechaVencimiento;
             entity.Beneficios = dto.Beneficios;
-            entity.CodigoVerificacion = dto.CodigoVerificacion; 
-
+            entity.CodigoVerificacion = dto.CodigoVerificacion;
+            entity.EstadoInscripcion = dto.EstadoInscripcion;
             await dBConexion.SaveChangesAsync();
             return NoContent();
         }

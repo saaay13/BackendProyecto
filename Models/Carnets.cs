@@ -38,16 +38,13 @@ namespace BackendProyecto.Models
         [Required(ErrorMessage = "El código de verificación es obligatorio.")]
         public Guid CodigoVerificacion { get; set; }
         //
-        /*
-        [Required(ErrorMessage = "La URL del carnet es obligatoria.")]
-        [Url(ErrorMessage = "La URL del carnet no es válida.")]
-        public string UrlCarnet { get; set; } = string.Empty;
-        */
-        //
+       
 
         [Required(ErrorMessage = "El estado del carnet es obligatorio.")]
         public EstadoCarnetEnum EstadoInscripcion { get; set; } = EstadoCarnetEnum.Activo;
 
         public enum EstadoCarnetEnum { Activo, Suspendido, Vencido }
+        [MaxLength(500)]
+        public string? UrlCarnet { get; set; }
     }
 }

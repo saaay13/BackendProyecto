@@ -15,7 +15,7 @@ namespace BackendProyecto.Controllers
 
         // GET: api/UsuarioRol
         [HttpGet]
-        //[Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<IEnumerable<UsuarioRol>>> GetUsuarioRoles()
         {
             var lista = await dBConexion.UsuarioRol
@@ -29,7 +29,7 @@ namespace BackendProyecto.Controllers
         // POST: api/UsuarioRol
 
         [HttpPost]
-       // [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> PostUsuarioRol([FromBody] UsuarioRol usuarioRol)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -54,7 +54,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpPut("{idUsuario:int}/{idRolActual:int}")]
-        //[Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> UpdateUsuarioRol(
             int idUsuario, int idRolActual, [FromBody] int nuevoRolId)
         {
@@ -91,7 +91,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpDelete("{idUsuario:int}/{idRol:int}")]
-        //[Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteUsuarioRol(int idUsuario, int idRol)
         {
             var entity = await dBConexion.UsuarioRol
