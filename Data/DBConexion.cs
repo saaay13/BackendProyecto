@@ -4,18 +4,18 @@ namespace BackendProyecto.Data
 
 
 {
-    public class DBConexion:DbContext
+    public class DBConexion : DbContext
     {
         public DBConexion(DbContextOptions options) : base(options) { }
-        public DbSet<Usuarios>Usuario { get; set; }
+        public DbSet<Usuarios> Usuario { get; set; }
         public DbSet<Roles> Rol { get; set; }
         public DbSet<UsuarioRol> UsuarioRol { get; set; }
-        public DbSet<Ongs>Ong { get; set; }
-        public DbSet<Proyectos> Proyecto{ get; set; }
+        public DbSet<Ongs> Ong { get; set; }
+        public DbSet<Proyectos> Proyecto { get; set; }
         public DbSet<Actividades> Actividad { get; set; }
         public DbSet<Inscripciones> Inscripcion { get; set; }
         public DbSet<Asistencias> Asistencia { get; set; }
-        public DbSet<Certificados> Certificado{ get; set; }
+        public DbSet<Certificados> Certificado { get; set; }
         public DbSet<Carnets> Carnet { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
