@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 namespace BackendProyecto.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")] // => "api/Asistencias"
+    [Route("api/[controller]")] 
     public class AsistenciasController : ControllerBase
     {
         private readonly DBConexion dBConexion;
@@ -16,7 +16,7 @@ namespace BackendProyecto.Controllers
         public class AsistenciaInput
         {
             public int IdInscripcion { get; set; }
-            public DateTime? HoraResgistro { get; set; } // (respeta tu nombre)
+            public DateTime? HoraResgistro { get; set; }
             public string? Observacion { get; set; }
         }
 
@@ -69,7 +69,7 @@ namespace BackendProyecto.Controllers
         }
 
         // ===== POST: api/Asistencias  (REGISTRAR) =====
-        [HttpPost] // <<--- SIN "asistencias" extra
+        [HttpPost] 
         public async Task<ActionResult> RegistrarAsistencia([FromBody] AsistenciaInput input)
         {
             // 1) Inscripción -> Actividad -> Proyecto
@@ -97,7 +97,7 @@ namespace BackendProyecto.Controllers
             if (existeMismoDia)
                 return Conflict("Ya registraste asistencia para este día.");
 
-            // 5) Crear
+           
             var nueva = new Asistencias
             {
                 IdInscripcion = ins.IdInscripcion,
@@ -189,7 +189,7 @@ namespace BackendProyecto.Controllers
         }
 
         // ===== GET: api/Asistencias/estado/999 =====
-        [HttpGet("estado/{idInscripcion:int}")] // <<--- RUTA LIMPIA QUE COINCIDE CON TU FRONT
+        [HttpGet("estado/{idInscripcion:int}")] 
         public async Task<ActionResult<object>> EstadoAsistencia(int idInscripcion)
         {
             var ins = await dBConexion.Inscripcion

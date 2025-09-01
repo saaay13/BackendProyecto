@@ -34,7 +34,6 @@ namespace BackendProyecto.Controllers
         {
             if (!ModelState.IsValid) return BadRequest("Datos invalidos");
 
-            // 1) Usuario y ONG existen
             var usuario = await dBConexion.Usuario
                 .FirstOrDefaultAsync(u => u.IdUsuario == carnet.IdUsuario);
             if (usuario is null) return BadRequest("El usuario no existe");
@@ -42,7 +41,6 @@ namespace BackendProyecto.Controllers
             var ong = await dBConexion.Ong.FindAsync(carnet.IdOng);
             if (ong is null) return BadRequest("La ong no existe");
 
-            // 2) Verificar rol SIN navegación (join por tabla puente)
             var rolesUsuario = await dBConexion.UsuarioRol
                 .Include(ur => ur.Rol)
                 .Where(ur => ur.IdUsuario == carnet.IdUsuario)
@@ -57,13 +55,11 @@ namespace BackendProyecto.Controllers
             if (!esElegibleRol)
                 return BadRequest("El usuario no tiene rol de Voluntario (o superior).");
 
-            // 3) Al menos una inscripción CONFIRMADA
             bool tieneInscripcion = await dBConexion.Inscripcion
                 .AnyAsync(i => i.IdUsuario == carnet.IdUsuario
                             && i.EstadoInscripcion == Inscripciones.EstadoInscripcionEnum.Confirmada);
             if (!tieneInscripcion) return BadRequest("El usuario no tiene inscripciones confirmadas.");
 
-            // 4) Evitar duplicado vigente por usuario y por ONG
             var hoy = DateTime.UtcNow.Date;
             var carnetVigente = await dBConexion.Carnet
                 .AnyAsync(c => c.IdUsuario == carnet.IdUsuario && c.FechaVencimiento >= hoy);
@@ -73,15 +69,9 @@ namespace BackendProyecto.Controllers
                 .AnyAsync(c => c.IdOng == carnet.IdOng && c.IdUsuario == carnet.IdUsuario && c.FechaVencimiento >= hoy);
             if (duplicadoPorOng) return BadRequest("Ya existe un carnet vigente para ese usuario en esa ONG.");
 
-            // 5) Completar SOLO fechas (evitamos asignar CodigoVerificacion para no chocar tipos)
             if (carnet.FechaEmision == default) carnet.FechaEmision = DateTime.UtcNow;
             if (carnet.FechaVencimiento == default) carnet.FechaVencimiento = DateTime.UtcNow.AddYears(1);
 
-            // Si QUIERES generar Código, elige UNA de estas líneas según tu modelo (déjalas comentadas si no estás seguro):
-            // (A) Si CodigoVerificacion es string:
-            // carnet.CodigoVerificacion = $"V-{DateTime.UtcNow:yyyy}{carnet.IdUsuario:D6}-{Guid.NewGuid().ToString("N")[..6].ToUpper()}";
-            // (B) Si CodigoVerificacion es Guid:
-            // carnet.CodigoVerificacion = Guid.NewGuid();
 
             dBConexion.Carnet.Add(carnet);
             await dBConexion.SaveChangesAsync();
@@ -143,8 +133,7 @@ namespace BackendProyecto.Controllers
             entity.FechaEmision = dto.FechaEmision;
             entity.FechaVencimiento = dto.FechaVencimiento;
             entity.Beneficios = dto.Beneficios;
-            entity.CodigoVerificacion = dto.CodigoVerificacion; // puedes bloquearlo si no quieres que cambie
-                                                                // entity.EstadoInscripcion = dto.EstadoInscripcion; // si decides permitir
+            entity.CodigoVerificacion = dto.CodigoVerificacion; 
 
             await dBConexion.SaveChangesAsync();
             return NoContent();

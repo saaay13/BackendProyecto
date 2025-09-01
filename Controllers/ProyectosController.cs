@@ -106,31 +106,28 @@ namespace BackendProyecto.Controllers
             if (id != input.IdProyecto)
                 return BadRequest("El Id de la URL no coincide con el del cuerpo.");
 
-            // Validación de modelo
+
             if (!ModelState.IsValid)
                 return ValidationProblem(ModelState);
 
-            // Existe el proyecto
+
             var proyecto = await _db.Proyecto.FirstOrDefaultAsync(p => p.IdProyecto == id);
             if (proyecto is null) return NotFound("Proyecto no encontrado");
 
-            // Unicidad de nombre (excluyendo el propio)
             var nombreRepetido = await _db.Proyecto
                 .AnyAsync(p => p.NombreProyecto == input.NombreProyecto && p.IdProyecto != id);
             if (nombreRepetido) return BadRequest("Ya existe un proyecto con ese nombre.");
 
-            // FK válidas
             var ongExiste = await _db.Ong.AnyAsync(o => o.IdOng == input.IdOng);
             if (!ongExiste) return BadRequest("La ONG no existe.");
 
             var respExiste = await _db.Usuario.AnyAsync(u => u.IdUsuario == input.IdResponsable);
             if (!respExiste) return BadRequest("El responsable no existe.");
 
-            // (Opcional) Validación de fechas
             if (input.FechaFin < input.FechaInicio)
                 return BadRequest("La fecha de fin no puede ser anterior a la de inicio.");
 
-            // Mapear campos permitidos
+         
             proyecto.IdOng = input.IdOng;
             proyecto.NombreProyecto = input.NombreProyecto;
             proyecto.Descripcion = input.Descripcion;

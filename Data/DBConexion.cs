@@ -46,13 +46,13 @@ namespace BackendProyecto.Data
                 .OnDelete(DeleteBehavior.Cascade);
             modelBuilder.Entity<UsuarioRol>()
                 .HasOne(ur => ur.Usuario)
-                .WithMany() // <- sin u => u.UsuarioRoles
+                .WithMany() 
                 .HasForeignKey(ur => ur.IdUsuario)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<UsuarioRol>()
                 .HasOne(ur => ur.Rol)
-                .WithMany() // <- sin r => r.UsuarioRoles
+                .WithMany() 
                 .HasForeignKey(ur => ur.IdRol)
                 .OnDelete(DeleteBehavior.Restrict);
 

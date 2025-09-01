@@ -88,7 +88,6 @@ namespace BackendProyecto.Controllers
             if (usuario is null)
                 return NotFound("Usuario no encontrado.");
 
-            // Email único (excluyendo al mismo usuario)
             var emailOcupado = await dbConexion.Usuario
                 .AnyAsync(u => u.CorreoUsuario == request.CorreoUsuario && u.IdUsuario != id);
             if (emailOcupado)
@@ -104,7 +103,6 @@ namespace BackendProyecto.Controllers
         }
 
         // DELETE: api/Usuarios/5
-        // Solo Admin puede eliminar usuarios
         [HttpDelete("{id:int}")]
        // [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteUsuario(int id)
@@ -113,7 +111,7 @@ namespace BackendProyecto.Controllers
             if (usuario is null)
                 return NotFound("Usuario no encontrado.");
 
-            // Quitar asignaciones de rol primero
+
             var asignaciones = await dbConexion.UsuarioRol
                 .Where(ur => ur.IdUsuario == id)
                 .ToListAsync();
@@ -121,7 +119,7 @@ namespace BackendProyecto.Controllers
             if (asignaciones.Count > 0)
                 dbConexion.UsuarioRol.RemoveRange(asignaciones);
 
-            // Luego eliminar el usuario
+
             dbConexion.Usuario.Remove(usuario);
             await dbConexion.SaveChangesAsync();
 

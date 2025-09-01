@@ -69,7 +69,6 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpPost]
-        //[Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Certificados>> PostCertificado(Certificados certificado)
         {
             if (!ModelState.IsValid) return BadRequest("Datos invalidos");
@@ -82,7 +81,6 @@ namespace BackendProyecto.Controllers
                 .FirstOrDefaultAsync(a => a.IdActividad == certificado.IdActividad);
             if (actividad is null) return BadRequest("La actividad no existe");
 
-            // 1) Debe tener inscripción CONFIRMADA en esa actividad
             var inscripcion = await dBConexion.Inscripcion
                 .FirstOrDefaultAsync(i => i.IdUsuario == certificado.IdUsuario
                                        && i.IdActividad == certificado.IdActividad
@@ -90,30 +88,24 @@ namespace BackendProyecto.Controllers
             if (inscripcion is null)
                 return BadRequest("El usuario no tiene inscripción confirmada en esta actividad.");
 
-            // 2) La actividad debe haber finalizado (usa tu propio criterio/fecha)
             if (actividad.FechaActividad.Date > DateTime.UtcNow.Date)
                 return BadRequest("La actividad aún no ha finalizado.");
 
-            // 3) Asistencia mínima por IdInscripcion (70% por ejemplo)
             var totalRegistros = await dBConexion.Asistencia
                 .CountAsync(a => a.IdInscripcion == inscripcion.IdInscripcion);
             var presentes = await dBConexion.Asistencia
                 .CountAsync(a => a.IdInscripcion == inscripcion.IdInscripcion && a.Asistio);
 
-            // Si no registras faltas (solo presentes), puedes exigir al menos 1 presente:
-            // if (presentes < 1) return BadRequest("No se registran asistencias del usuario.");
 
             int porcentaje = totalRegistros == 0 ? 0 : (int)Math.Round((presentes * 100.0) / totalRegistros);
             if (porcentaje < 70)
                 return BadRequest($"Asistencia insuficiente ({porcentaje}%). Requisito mínimo: 70%.");
 
-            // 4) Evitar duplicado usuario-actividad
             var yaGenerado = await dBConexion.Certificado
                 .AnyAsync(c => c.IdActividad == certificado.IdActividad && c.IdUsuario == certificado.IdUsuario);
             if (yaGenerado)
                 return BadRequest("El certificado de ese usuario en esa actividad ya fue generado");
 
-            // 5) Emitir certificado
             if (string.IsNullOrWhiteSpace(certificado.CodigoVerificacion))
                 certificado.CodigoVerificacion = Guid.NewGuid().ToString("N")[..12].ToUpper();
 
@@ -150,7 +142,6 @@ namespace BackendProyecto.Controllers
             var entity = await dBConexion.Certificado.FindAsync(id);
             if (entity is null) return NotFound("Certificado no encontrado.");
 
-            // Validaciones básicas si cambias usuario/actividad:
             if (entity.IdUsuario != dto.IdUsuario || entity.IdActividad != dto.IdActividad)
             {
                 var usuario = await dBConexion.Usuario.FindAsync(dto.IdUsuario);
@@ -158,18 +149,15 @@ namespace BackendProyecto.Controllers
                 var actividad = await dBConexion.Actividad.FindAsync(dto.IdActividad);
                 if (actividad is null) return BadRequest("La actividad no existe.");
 
-                // Evitar duplicados usuario-actividad
                 var yaGenerado = await dBConexion.Certificado
                     .AnyAsync(c => c.IdActividad == dto.IdActividad && c.IdUsuario == dto.IdUsuario && c.IdCertificado != id);
                 if (yaGenerado) return BadRequest("Ya existe un certificado para ese usuario en esa actividad.");
             }
 
-            // Actualizar campos principales
             entity.IdUsuario = dto.IdUsuario;
             entity.IdActividad = dto.IdActividad;
             entity.FechaEmision = dto.FechaEmision;
 
-            // Normalmente NO cambiamos CodigoVerificacion en edición.
             await dBConexion.SaveChangesAsync();
             return NoContent();
         }

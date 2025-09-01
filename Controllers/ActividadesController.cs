@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
 using static BackendProyecto.Models.Actividades;
+using static BackendProyecto.Models.Inscripciones;
 
 namespace BackendProyecto.Controllers
 {
@@ -116,45 +118,7 @@ namespace BackendProyecto.Controllers
             return Ok(a);
         }
 
-        // ===================== LISTA PÚBLICA (visitantes) =====================
-        [HttpGet("public")]
-        [AllowAnonymous]
-        public async Task<ActionResult<IEnumerable<object>>> GetActividadesPublic()
-        {
-            var actividades = await dBConexion.Actividad
-                .Include(a => a.Proyecto).ThenInclude(p => p.Responsable)
-                .Include(a => a.Proyecto).ThenInclude(p => p.Ong)
-                .OrderBy(a => a.FechaActividad)
-                .ToListAsync();
-
-            var resultado = actividades.Select(a => new
-            {
-                a.IdActividad,
-                a.NombreActividad,
-                a.FechaActividad,
-                a.HoraInicio,
-                a.HoraFin,
-                a.Lugar,
-                a.CupoMaximo,
-                a.EstadoActividad,
-                Proyecto = a.Proyecto == null ? null : new
-                {
-                    a.Proyecto.IdProyecto,
-                    a.Proyecto.NombreProyecto,
-                    Responsable = a.Proyecto.Responsable == null ? null : new
-                    {
-                        a.Proyecto.Responsable.Nombre
-                    },
-                    Ong = a.Proyecto.Ong == null ? null : new
-                    {
-                        a.Proyecto.Ong.NombreOng
-                    }
-                }
-            });
-
-            return Ok(resultado);
-        }
-
+       
         // ===================== CREAR =====================
         [HttpPost]
        // [Authorize(Roles = "Administrador,Coordinador")]
@@ -243,5 +207,119 @@ namespace BackendProyecto.Controllers
 
             return Ok($"Actividad con Id {id} eliminada correctamente.");
         }
+        // ===================== LISTA PÚBLICA (visitantes) =====================
+        [HttpGet("public")]
+        [AllowAnonymous]
+        public async Task<ActionResult<IEnumerable<object>>> GetActividadesPublic(
+            [FromQuery] DateTime? desde = null,
+            [FromQuery] EstadoActividadEnum? estado = null)
+        {
+            var q = dBConexion.Actividad
+                .Include(a => a.Proyecto).ThenInclude(p => p.Responsable)
+                .Include(a => a.Proyecto).ThenInclude(p => p.Ong)
+                .AsQueryable();
+
+            // Por defecto, desde hoy
+            var start = (desde ?? DateTime.Today).Date;
+            q = q.Where(a => a.FechaActividad >= start);
+
+            if (estado.HasValue)
+                q = q.Where(a => a.EstadoActividad == estado.Value);
+
+            var actividades = await q.OrderBy(a => a.FechaActividad).ThenBy(a => a.HoraInicio).ToListAsync();
+
+            var resultado = actividades.Select(a => new
+            {
+                a.IdActividad,
+                a.NombreActividad,
+                a.FechaActividad,
+                a.HoraInicio,
+                a.HoraFin,
+                a.Lugar,
+                a.CupoMaximo,
+                a.EstadoActividad,
+                Proyecto = a.Proyecto == null ? null : new
+                {
+                    a.Proyecto.IdProyecto,
+                    a.Proyecto.NombreProyecto,
+                    Responsable = a.Proyecto.Responsable == null ? null : new
+                    {
+                        a.Proyecto.Responsable.Nombre
+                    },
+                    Ong = a.Proyecto.Ong == null ? null : new
+                    {
+                        a.Proyecto.Ong.NombreOng
+                    }
+                }
+            });
+
+            return Ok(resultado);
+        }
+
+        public record InscribirInput(int? IdUsuario); 
+
+        // POST: api/Actividades/{id}/inscribir
+        [HttpPost("{id:int}/inscribir")]
+        [Authorize(Roles = "Voluntario")]
+        public async Task<IActionResult> InscribirVoluntario(int id, [FromBody] InscribirInput input)
+        {
+            int idUsuario;
+            var claimId = User.FindFirst("IdUsuario")?.Value
+                       ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!string.IsNullOrWhiteSpace(claimId) && int.TryParse(claimId, out var parsed))
+                idUsuario = parsed;
+            else if (input?.IdUsuario is int bodyId && bodyId > 0)
+                idUsuario = bodyId;
+            else
+                return BadRequest("No se pudo determinar el IdUsuario (token o body).");
+
+            var usuario = await dBConexion.Set<Usuarios>().FindAsync(idUsuario);
+            if (usuario is null) return NotFound("Usuario no encontrado.");
+
+            var actividad = await dBConexion.Actividad.FindAsync(id);
+            if (actividad is null) return NotFound("Actividad no encontrada.");
+
+            
+            if (actividad.FechaActividad.Date < DateTime.Today)
+                return BadRequest("La actividad ya ocurrió.");
+
+            if (actividad.EstadoActividad is not (EstadoActividadEnum.Planificada or EstadoActividadEnum.EnCurso))
+                return BadRequest("La actividad no permite inscripciones en su estado actual.");
+
+            var yaInscrito = await dBConexion.Set<Inscripciones>()
+                .AnyAsync(i => i.IdUsuario == idUsuario
+                            && i.IdActividad == id
+                            && i.EstadoInscripcion != EstadoInscripcionEnum.Cancelada);
+
+            if (yaInscrito)
+                return Conflict("Ya estás inscrito en esta actividad.");
+
+            var confirmados = await dBConexion.Set<Inscripciones>()
+                .CountAsync(i => i.IdActividad == id
+                              && i.EstadoInscripcion == EstadoInscripcionEnum.Confirmada);
+
+            if (confirmados >= actividad.CupoMaximo)
+                return BadRequest("No hay cupos disponibles.");
+
+            var ins = new Inscripciones
+            {
+                IdUsuario = idUsuario,
+                IdActividad = id,
+                FechaInscripcion = DateTime.Now,
+                EstadoInscripcion = EstadoInscripcionEnum.Confirmada 
+            };
+
+            dBConexion.Set<Inscripciones>().Add(ins);
+            await dBConexion.SaveChangesAsync();
+
+            return Ok(new
+            {
+                ok = true,
+                msg = "Inscripción realizada.",
+                IdInscripcion = ins.IdInscripcion
+            });
+        }
+
     }
 }

@@ -27,7 +27,6 @@ namespace BackendProyecto.Controllers
             return await dBConexion.Ong.ToListAsync();
         }
 
-        // Detalle por ID (público recomendado)
         [HttpGet("{idOng:int}")]
         [AllowAnonymous]
         public async Task<ActionResult<Ongs>> GetOng(int idOng)
@@ -37,7 +36,7 @@ namespace BackendProyecto.Controllers
             return ong;
         }
 
-        // Listado público (para landing / exploración)
+     
         [HttpGet("public")]
         [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<object>>> GetOngsPublic()
@@ -84,7 +83,7 @@ namespace BackendProyecto.Controllers
             if (!ModelState.IsValid)
                 return BadRequest("Datos inválidos");
 
-            // Validar nombre duplicado (excluyendo el mismo registro)
+
             var nombreDuplicado = await dBConexion.Ong
                 .AnyAsync(o => o.IdOng != idOng && o.NombreOng == input.NombreOng);
             if (nombreDuplicado)
@@ -93,7 +92,6 @@ namespace BackendProyecto.Controllers
             var ong = await dBConexion.Ong.FindAsync(idOng);
             if (ong == null) return NotFound("ONG no encontrada");
 
-            // Mapear campos permitidos
             ong.NombreOng = input.NombreOng;
             ong.Descripcion = input.Descripcion;
             ong.Direccion = input.Direccion;
