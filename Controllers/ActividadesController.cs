@@ -121,7 +121,7 @@ namespace BackendProyecto.Controllers
        
         // ===================== CREAR =====================
         [HttpPost]
-       // [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult> PostActividad([FromBody] ActividadInput input)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -160,7 +160,7 @@ namespace BackendProyecto.Controllers
 
         // ===================== EDITAR =====================
         [HttpPut("{id:int}")]
-       // [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> PutActividad(int id, [FromBody] ActividadInput input)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -196,7 +196,7 @@ namespace BackendProyecto.Controllers
 
         // ===================== ELIMINAR =====================
         [HttpDelete("{id:int}")]
-       // [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteActividad(int id)
         {
             var actividad = await dBConexion.Actividad.FindAsync(id);
@@ -219,7 +219,7 @@ namespace BackendProyecto.Controllers
                 .Include(a => a.Proyecto).ThenInclude(p => p.Ong)
                 .AsQueryable();
 
-            // Por defecto, desde hoy
+           
             var start = (desde ?? DateTime.Today).Date;
             q = q.Where(a => a.FechaActividad >= start);
 

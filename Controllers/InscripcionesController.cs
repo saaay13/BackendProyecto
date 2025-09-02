@@ -155,7 +155,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpDelete("{id}")]
-        //[Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteIncripcion(int id)
         {
 
@@ -172,7 +172,7 @@ namespace BackendProyecto.Controllers
 
 
         }
-        // GET: api/Inscripciones/por-actividad/10?soloConfirmadas=true
+        
         [HttpGet("por-actividad/{idActividad:int}")]
         //[Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<IEnumerable<InscripcionListItem>>> GetPorActividad(
@@ -239,7 +239,6 @@ namespace BackendProyecto.Controllers
                 out Inscripciones.EstadoInscripcionEnum nuevo))
                 return BadRequest("EstadoInscripcion inválido.");
 
-            // Si se quiere Confirmar, valida cupo (sin alterar CupoMaximo)
             if (nuevo == Inscripciones.EstadoInscripcionEnum.Confirmada)
             {
                 var confirmadas = await dBConexion.Inscripcion

@@ -121,7 +121,7 @@ namespace BackendProyecto.Controllers
 
 
         [HttpDelete("{id}")]
-        //[Authorize(Roles ="Administrador")]
+        [Authorize(Roles ="Administrador")]
         public async Task<IActionResult> DeleteCarnet(int id)
         {
 

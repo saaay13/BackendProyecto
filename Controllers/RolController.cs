@@ -15,7 +15,7 @@ namespace BackendProyecto.Controllers
 
         // GET: api/Rol
         [HttpGet]
-        //[Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<ActionResult<IEnumerable<object>>> Get()
         {
             var roles = await _db.Rol
@@ -27,7 +27,7 @@ namespace BackendProyecto.Controllers
 
         // POST: api/Rol
         [HttpPost]
-        //[Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Post([FromBody] RolCreateDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.NombreRol))
@@ -45,7 +45,7 @@ namespace BackendProyecto.Controllers
 
         // GET: api/Rol/5
         [HttpGet("{id:int}")]
-        //[Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> GetById(int id)
         {
             var r = await _db.Rol.FindAsync(id);
@@ -55,7 +55,7 @@ namespace BackendProyecto.Controllers
 
         // PUT: api/Rol/5
         [HttpPut("{id:int}")]
-       // [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Put(int id, [FromBody] RolUpdateDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.NombreRol))
@@ -75,7 +75,7 @@ namespace BackendProyecto.Controllers
 
         // DELETE: api/Rol/5
         [HttpDelete("{id:int}")]
-        //[Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> Delete(int id)
         {
             var rol = await _db.Rol.FindAsync(id);

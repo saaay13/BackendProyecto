@@ -9,7 +9,6 @@ namespace BackendProyecto.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-  //  [Authorize(Roles = "Administrador,Coordinador")] 
     public class UsuariosController : ControllerBase
     {
         private readonly DBConexion dbConexion;
@@ -104,7 +103,7 @@ namespace BackendProyecto.Controllers
 
         // DELETE: api/Usuarios/5
         [HttpDelete("{id:int}")]
-       // [Authorize(Roles = "Administrador")]
+        [Authorize(Roles = "Administrador")]
         public async Task<IActionResult> DeleteUsuario(int id)
         {
             var usuario = await dbConexion.Usuario.FindAsync(id);
@@ -135,7 +134,7 @@ namespace BackendProyecto.Controllers
 
         // PUT: api/Usuarios/{id}/password
         [HttpPut("{id:int}/password")]
-       // [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
 
         public async Task<IActionResult> UpdatePassword(int id, [FromBody] PasswordUpdateRequest req)
         {

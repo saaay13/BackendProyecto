@@ -43,7 +43,7 @@ namespace BackendProyecto.Controllers
 
         // GET: api/Proyectos/public
         [HttpGet("public")]
-     //   [Authorize(Roles = "Voluntario")]
+     
         public async Task<ActionResult<IEnumerable<object>>> GetPublic()
         {
             var data = await _db.Proyecto
@@ -65,7 +65,7 @@ namespace BackendProyecto.Controllers
 
         // POST: api/Proyectos
         [HttpPost]
-     //   [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Proyectos>> Create([FromBody] Proyectos proyecto)
         {
             if (!ModelState.IsValid) return BadRequest("Datos inválidos");
@@ -88,7 +88,7 @@ namespace BackendProyecto.Controllers
 
         // DELETE: api/Proyectos/5
         [HttpDelete("{id:int}")]
-        //[Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> Delete(int id)
         {
             var proyecto = await _db.Proyecto.FindAsync(id);
@@ -100,7 +100,7 @@ namespace BackendProyecto.Controllers
         }
         // PUT: api/Proyectos/5
         [HttpPut("{id:int}")]
-       // [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> Update(int id, [FromBody] Proyectos input)
         {
             if (id != input.IdProyecto)

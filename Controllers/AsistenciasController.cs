@@ -85,7 +85,7 @@ namespace BackendProyecto.Controllers
             var hora = input.HoraResgistro ?? DateTime.Now;
             var dia = hora.Date;
 
-            // 3) Validar rango [inicio actividad, fin proyecto] (INCLUYE)
+            // 3) Validar rango [inicio actividad, fin proyecto] 
             var inicio = ins.Actividad.FechaActividad.Date;
             var fin = ins.Actividad.Proyecto.FechaFin.Date;
             if (dia < inicio || dia > fin)
@@ -115,7 +115,6 @@ namespace BackendProyecto.Controllers
             return Created("", null);
         }
 
-        // ===== helper: recalcula bandera Asistio =====
         private async Task<bool> RecalcularBanderaAsistio(int idInscripcion)
         {
             var ins = await dBConexion.Inscripcion
