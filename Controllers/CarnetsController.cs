@@ -3,6 +3,7 @@ using BackendProyecto.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BackendProyecto.Controllers
 {
@@ -29,7 +30,7 @@ namespace BackendProyecto.Controllers
             return carnets;
         }
         [HttpPost]
-        //[Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<ActionResult<Carnets>> PostCarnet(Carnets carnet)
         {
             if (!ModelState.IsValid) return BadRequest("Datos invalidos");
@@ -86,6 +87,7 @@ namespace BackendProyecto.Controllers
             return CreatedAtAction(nameof(GetCarnetById), new { id = carnet.IdCarnet }, carnet);
         }
         [HttpGet("{id:int}/pdf")]
+        [Authorize(Roles = "Voluntario,Administrador")]
         public async Task<IActionResult> GetCarnetPdf(int id, [FromServices] IWebHostEnvironment env)
         {
             var carnet = await dBConexion.Carnet
@@ -95,19 +97,27 @@ namespace BackendProyecto.Controllers
 
             if (carnet is null) return NotFound("Carnet no encontrado.");
 
-            // Ruta al logo dentro de wwwroot
-            var logoPath = Path.Combine(env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"),
-                                        "img", "LogoSinFondo.png");
+            var isAdmin = User.IsInRole("Administrador");
+            var userId = GetCurrentUserId();
 
-            byte[]? logoBytes = null;
-            if (System.IO.File.Exists(logoPath))
+           
+            if (!isAdmin)
             {
-                logoBytes = await System.IO.File.ReadAllBytesAsync(logoPath);
+                if (userId is null || carnet.IdUsuario != userId.Value)
+                    return Forbid("No puedes descargar carnets de otros usuarios.");
             }
+
+            var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var logoPath = Path.Combine(webroot, "img", "LogoSinFondo.png");
+            byte[]? logoBytes = System.IO.File.Exists(logoPath)
+                ? await System.IO.File.ReadAllBytesAsync(logoPath)
+                : null;
 
             var pdfBytes = PdfCarnetBuilder.BuildCarnet(carnet, logoBytes);
             return File(pdfBytes, "application/pdf", $"carnet-{id}.pdf");
         }
+
+
 
 
         [HttpDelete("{id}")]
@@ -144,7 +154,7 @@ namespace BackendProyecto.Controllers
 
         // PUT: api/Carnets/5
         [HttpPut("{id:int}")]
-        //[Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> PutCarnet(int id, [FromBody] Carnets dto)
         {
             var entity = await dBConexion.Carnet.FindAsync(id);
@@ -157,7 +167,6 @@ namespace BackendProyecto.Controllers
             var ong = await dBConexion.Ong.FindAsync(dto.IdOng);
             if (ong is null) return BadRequest("La ong no existe.");
 
-            // Actualizar campos editables
             entity.IdUsuario = dto.IdUsuario;
             entity.IdOng = dto.IdOng;
             entity.FechaEmision = dto.FechaEmision;
@@ -167,6 +176,26 @@ namespace BackendProyecto.Controllers
             entity.EstadoInscripcion = dto.EstadoInscripcion;
             await dBConexion.SaveChangesAsync();
             return NoContent();
+        }
+        [HttpGet("mios")]
+        [Authorize(Roles = "Voluntario,Coordinador,Administrador")]
+        public async Task<ActionResult<IEnumerable<Carnets>>> GetMisCarnets()
+        {
+            var userId = GetCurrentUserId();
+            if (userId is null) return Forbid();
+
+            var res = await dBConexion.Carnet
+                .Include(c => c.Usuario)
+                .Include(c => c.Ong)
+                .Where(c => c.IdUsuario == userId.Value)
+                .ToListAsync();
+
+            return res;
+        }
+        private int? GetCurrentUserId()
+        {
+            var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            return int.TryParse(value, out var id) ? id : null;
         }
 
     }

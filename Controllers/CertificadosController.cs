@@ -3,6 +3,7 @@ using BackendProyecto.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace BackendProyecto.Controllers
 {
@@ -120,7 +121,7 @@ namespace BackendProyecto.Controllers
         }
 
         [HttpDelete("{id}")]
-       // [Authorize(Roles = "Administrador,Coordinador")]
+       [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> DeleteCertificado(int id)
         {
 
@@ -136,7 +137,7 @@ namespace BackendProyecto.Controllers
             return Ok($"Certificado con Id {id} eliminado correctamente");
         }
         [HttpPut("{id:int}")]
-       // [Authorize(Roles = "Administrador,Coordinador")]
+        [Authorize(Roles = "Administrador,Coordinador")]
         public async Task<IActionResult> PutCertificado(int id, [FromBody] Certificados dto)
         {
             var entity = await dBConexion.Certificado.FindAsync(id);
@@ -161,7 +162,60 @@ namespace BackendProyecto.Controllers
             await dBConexion.SaveChangesAsync();
             return NoContent();
         }
+        [HttpGet("{id:int}/pdf")]
+        [Authorize(Roles = "Voluntario,Administrador")]
+        public async Task<IActionResult> GetCertificadoPdf(int id, [FromServices] IWebHostEnvironment env)
+        {
+            var cert = await dBConexion.Certificado
+                .Include(c => c.Usuario)
+                .Include(c => c.Actividad).ThenInclude(a => a.Proyecto).ThenInclude(p => p.Ong)
+                .FirstOrDefaultAsync(c => c.IdCertificado == id);
+
+            if (cert is null) return NotFound("Certificado no encontrado.");
+
+            var isAdmin = User.IsInRole("Administrador");
+            var userId = GetCurrentUserId();
+
+            
+            if (!isAdmin)
+            {
+                if (userId is null || cert.IdUsuario != userId.Value)
+                    return Forbid("No puedes descargar certificados de otros usuarios.");
+            }
+
+            var webroot = env.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var logoPath = Path.Combine(webroot, "img", "LogoSinFondo.png");
+            byte[]? logoBytes = System.IO.File.Exists(logoPath)
+                ? await System.IO.File.ReadAllBytesAsync(logoPath)
+                : null;
+
+            var bytes = PdfCertificadoBuilder.BuildCertificado(cert, logoBytes);
+            return File(bytes, "application/pdf", $"certificado-{id}.pdf");
+        }
+
+        [HttpGet("mios")]
+        [Authorize(Roles = "Voluntario,Coordinador,Administrador")]
+        public async Task<ActionResult<IEnumerable<Certificados>>> GetMisCertificados()
+        {
+            var userId = GetCurrentUserId();
+            if (userId is null) return Forbid();
+
+            var res = await dBConexion.Certificado
+                .Include(c => c.Usuario)
+                .Include(c => c.Actividad).ThenInclude(a => a.Proyecto).ThenInclude(p => p.Ong)
+                .Where(c => c.IdUsuario == userId.Value)
+                .ToListAsync();
+
+            return res;
+        }
+
+        private int? GetCurrentUserId()
+        {
+        var value = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return int.TryParse(value, out var id) ? id : null;
+         }
+    
 
 
-    }
+}
 }

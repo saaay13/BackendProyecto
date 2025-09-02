@@ -14,7 +14,7 @@ public static class PdfCarnetBuilder
         using var qrGen = new QRCodeGenerator();
         using var data = qrGen.CreateQrCode(c.CodigoVerificacion.ToString(), QRCodeGenerator.ECCLevel.Q);
         using var qrCode = new PngByteQRCode(data);
-        var qrBytes = qrCode.GetGraphic(8); // 8 para CR80 (10 era muy grande)
+        var qrBytes = qrCode.GetGraphic(8); // tamaño razonable para CR80
 
         var colorPrimario = Colors.Blue.Medium;
         var colorTexto = Colors.Grey.Darken3;
@@ -23,105 +23,98 @@ public static class PdfCarnetBuilder
         {
             container.Page(page =>
             {
-                // CR80 - 85.6 x 54 mm en puntos (72 pt = 1in, 25.4 mm = 1in)
                 const float mm = 72f / 25.4f;
                 page.Size(85.6f * mm, 54f * mm);
 
-                page.Margin(8); // margen más chico para una tarjeta
+                page.Margin(8);
                 page.PageColor(Colors.White);
                 page.DefaultTextStyle(x => x.FontSize(9.5f).FontColor(colorTexto));
 
-                // Marco sutil
-                page.Content().Border(1).BorderColor(Colors.Grey.Lighten2).Padding(8);
-
-                page.Content().Column(col =>
-                {
-                    // Header: logo + título
-                    col.Item().Row(row =>
+                page.Content()
+                    .Border(1).BorderColor(Colors.Grey.Lighten2).Padding(8)
+                    .Column(col =>
                     {
-                        row.ConstantItem(60).Height(24).AlignLeft().AlignMiddle().Element(e =>
+                        col.Item().Row(row =>
                         {
-                            if (logoBytes is not null)
-                                e.Image(logoBytes, ImageScaling.FitArea);
-                            else
-                                e.Text("ONG").SemiBold().FontSize(12).FontColor(colorPrimario);
+                            row.ConstantItem(60).Height(24).AlignLeft().AlignMiddle().Element(e =>
+                            {
+                                if (logoBytes is not null)
+                                    e.Image(logoBytes, ImageScaling.FitArea);
+                                else
+                                    e.Text("ONG").SemiBold().FontSize(12).FontColor(colorPrimario);
+                            });
+
+                            row.RelativeItem().AlignRight().AlignMiddle().Text("CARNET DE VOLUNTARIO")
+                               .SemiBold().FontSize(11).FontColor(colorPrimario);
                         });
 
-                        row.RelativeItem().AlignRight().AlignMiddle().Text("CARNET DE VOLUNTARIO")
-                           .SemiBold().FontSize(11).FontColor(colorPrimario);
-                    });
+                        col.Item().PaddingVertical(4).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
 
-                    col.Item().PaddingVertical(4).LineHorizontal(1).LineColor(Colors.Grey.Lighten2);
-
-                    // Cuerpo: datos + QR
-                    col.Item().Row(row =>
-                    {
-                        // Datos (izquierda)
-                        row.RelativeItem().Column(left =>
+                        col.Item().Row(row =>
                         {
-                            left.Spacing(1.2f);
-
-                            left.Item().Text(t =>
+                            // Datos (izquierda)
+                            row.RelativeItem().Column(left =>
                             {
-                                t.Span("Voluntario: ").SemiBold().FontColor(colorPrimario);
-                                t.Span($"{c.Usuario?.Nombre} {c.Usuario?.Apellido}");
-                            });
+                                left.Spacing(1.2f);
 
-                            left.Item().Text(t =>
-                            {
-                                t.Span("ONG: ").SemiBold().FontColor(colorPrimario);
-                                t.Span($"{c.Ong?.NombreOng}");
-                            });
-
-                            if (!string.IsNullOrWhiteSpace(c.Beneficios))
-                            {
                                 left.Item().Text(t =>
                                 {
-                                    t.Span("Beneficios: ").SemiBold().FontColor(colorPrimario);
-                                    t.Span(c.Beneficios);
+                                    t.Span("Voluntario: ").SemiBold().FontColor(colorPrimario);
+                                    t.Span($"{c.Usuario?.Nombre} {c.Usuario?.Apellido}");
                                 });
-                            }
 
-                            left.Item().Text(t =>
-                            {
-                                t.Span("Estado: ").SemiBold().FontColor(colorPrimario);
-                                t.Span(c.EstadoInscripcion.ToString());
+                                left.Item().Text(t =>
+                                {
+                                    t.Span("ONG: ").SemiBold().FontColor(colorPrimario);
+                                    t.Span($"{c.Ong?.NombreOng}");
+                                });
+
+                                if (!string.IsNullOrWhiteSpace(c.Beneficios))
+                                {
+                                    left.Item().Text(t =>
+                                    {
+                                        t.Span("Beneficios: ").SemiBold().FontColor(colorPrimario);
+                                        t.Span(c.Beneficios);
+                                    });
+                                }
+
+                                left.Item().Text(t =>
+                                {
+                                    t.Span("Estado: ").SemiBold().FontColor(colorPrimario);
+                                    t.Span(c.EstadoInscripcion.ToString());
+                                });
+
+                                left.Item().Row(r2 =>
+                                {
+                                    r2.RelativeItem().Text(t =>
+                                    {
+                                        t.Span("Emisión: ").SemiBold().FontColor(colorPrimario);
+                                        t.Span($"{c.FechaEmision:yyyy-MM-dd}");
+                                    });
+                                    r2.RelativeItem().Text(t =>
+                                    {
+                                        t.Span("Vence: ").SemiBold().FontColor(colorPrimario);
+                                        t.Span($"{c.FechaVencimiento:yyyy-MM-dd}");
+                                    });
+                                });
+
+                               
                             });
 
-                            left.Item().Row(r2 =>
+                            // QR (derecha)
+                            row.ConstantItem(80).AlignRight().AlignMiddle().Column(right =>
                             {
-                                r2.RelativeItem().Text(t =>
-                                {
-                                    t.Span("Emisión: ").SemiBold().FontColor(colorPrimario);
-                                    t.Span($"{c.FechaEmision:yyyy-MM-dd}");
-                                });
-                                r2.RelativeItem().Text(t =>
-                                {
-                                    t.Span("Vence: ").SemiBold().FontColor(colorPrimario);
-                                    t.Span($"{c.FechaVencimiento:yyyy-MM-dd}");
-                                });
-                            });
-
-                            left.Item().Text(t =>
-                            {
-                                t.Span("Código: ").SemiBold().FontColor(colorPrimario);
-                                t.Span(c.CodigoVerificacion.ToString());
+                                right.Spacing(3);
+                                right.Item().Height(60).Width(60).Image(qrBytes, ImageScaling.FitArea);
+                                right.Item().Text("Escanea para verificar").FontSize(8).AlignCenter();
                             });
                         });
 
-                        // QR (derecha)
-                        row.ConstantItem(80).AlignRight().AlignMiddle().Column(right =>
-                        {
-                            right.Spacing(3);
-                            right.Item().Height(60).Width(60).Image(qrBytes, ImageScaling.FitArea);
-                            right.Item().Text("Escanea para verificar").FontSize(8).AlignCenter();
-                        });
+                        // Footer dentro del mismo Content
+                        col.Item().AlignCenter()
+                            .Text("Emitido por Sistema de Voluntariado")
+                            .FontSize(8.5f).FontColor(Colors.Grey.Medium);
                     });
-                });
-
-                page.Footer().AlignCenter()
-                    .Text("Emitido por Sistema de Voluntariado")
-                    .FontSize(8.5f).FontColor(Colors.Grey.Medium);
             });
         }).GeneratePdf();
     }
